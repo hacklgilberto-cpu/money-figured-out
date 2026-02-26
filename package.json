@@ -1,0 +1,27 @@
+{
+  "name": "money-figured-out",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "bcryptjs": "^2.4.3",
+    "next": "^16.1.6",
+    "next-auth": "^4.24.7",
+    "pg": "^8.11.5",
+    "plaid": "^26.0.0",
+    "puppeteer": "^24.37.5",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-plaid-link": "^3.5.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/react": "^18"
+  }
+}
