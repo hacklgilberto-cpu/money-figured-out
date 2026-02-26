@@ -1,8 +1,26 @@
 # Your Money, Figured Out
 
-A free financial planning portal that connects Canadian bank accounts via Plaid, analyzes real financial data with Claude AI, and produces a personalized roadmap with actionable tasks.
+> AI-powered financial planning for Canadians. Built as a submission for WealthSimple - AI Specialist.
 
-## Setup
+**Live demo:** [your-vercel-url.vercel.app]
+
+## What it does
+Connects to your bank via Plaid, runs your real transactions through Claude, 
+and delivers a ranked financial action plan with exact dollar impact per action — 
+in under 60 seconds. Supports English and French.
+
+## Setup 1
+1. Clone the repo
+2. Copy `.env.local.example` to `.env.local` and fill in your keys
+3. Run `npm install && npm run dev`
+
+## Keys needed
+- `ANTHROPIC_API_KEY` — claude.ai
+- `PLAID_CLIENT_ID` + `PLAID_SECRET` — plaid.com (Sandbox free)
+- `DATABASE_URL` — Supabase
+- `NEXTAUTH_SECRET` — any random string
+
+## Setup 2
 
 ### 1. Install dependencies
 ```bash
