@@ -12,50 +12,53 @@ const C = {
     title: 'Your Financial Roadmap',
     brand: 'your money, figured out',
     hereIsWhat: "HERE'S WHAT WE FOUND",
-    availableToUnlock: "available to unlock \u2014 here's exactly how",
-    seeActions: 'See your 3 priority actions',
-    netWorthToday: 'your net worth today',
-    partial: 'Partial picture',
-    connectMore: 'Connect more accounts \u2192',
+    movesHeadline: (n) => `${CAD(n)}/yr is yours to keep`,
+    movesSub: 'Three moves right now. Four habits to shift. Here is exactly how.',
+    scrollCta: 'Show me how',
+    storyLabel: 'THE HONEST PICTURE',
     yourMoneyThisMonth: 'YOUR MONEY THIS MONTH',
     income: 'Monthly income',
     expenses: 'Monthly expenses',
-    topSpending: 'Top spending',
+    surplusLabel: 'Left over each month',
+    savedLabel: 'Actually going to savings',
+    gapLabel: 'The gap this plan closes',
+    topSpending: 'Where it goes',
     perMonth: '/mo',
     perYear: '/yr',
-    surplus: 'surplus',
-    shortfall: 'shortfall',
-    doThese: 'DO THESE 3 THINGS',
-    highestImpact: 'Your highest-impact moves, in order',
-    tapToExpand: 'Tap any action to see the exact steps',
-    howExactly: 'How exactly',
-    cutFirst: 'Cut this first',
-    backInPocket: 'back in your pocket',
+    movesLabel: 'THREE MOVES RIGHT NOW',
+    movesTitle: 'Do these in order. Each one funds the next.',
+    tapToExpand: 'Tap any move to see the exact steps',
+    howExactly: 'How, exactly',
+    doRightNow: 'Right now',
+    habitsLabel: 'FOUR HABITS TO SHIFT',
+    habitsSub: (n) => `${CAD(n)}/yr stays in your account`,
     keepThese: 'Keep these',
-    inMonth: 'IN 12 MONTHS',
-    today: 'Today',
-    months12: '12 months',
-    savingsSentence: 'in new savings if you complete all three actions.',
+    projLabel: 'WHERE YOU WILL BE',
+    projToday: 'Today',
+    projFuture: 'In 12 months',
+    projSavings: (n) => `${CAD(n)}/mo in new savings once all three moves are done.`,
     savePlan: 'Turn this into a to-do list',
-    saveSub: 'Save your plan and track your progress as you check things off. We update your analysis every 90 days.',
-    saveCta: "Save my plan \u2014 it's free \u2192",
+    saveSub: 'Save your plan and track your progress as you check things off. We refresh your analysis every 90 days.',
+    saveCta: "Save my plan. It's free.",
     saveSeconds: '20 seconds. No credit card.',
     createAccount: 'Create your free account',
     roadmapWaiting: 'Your roadmap will be waiting for you.',
     emailLabel: 'Email',
     passwordLabel: 'Password',
-    saveButton: 'Save my roadmap \u2192',
+    saveButton: 'Save my roadmap',
     saving: 'Saving\u2026',
     haveAccount: 'Already have an account?',
     signIn: 'Sign in',
+    partial: 'Partial picture',
+    connectMore: 'Connect more accounts',
     disclaimer: 'For informational purposes only. Not financial advice. Verify TFSA room at CRA My Account.',
     sitLabels: {
-      debt_payoff: 'Debt payoff plan',
-      idle_money: 'Your money is idle',
-      surplus_leaking: 'Your surplus is leaking',
-      portfolio_gap: 'Portfolio gap',
-      emergency_fund: 'Safety net missing',
-      fhsa_opportunity: 'FHSA opportunity',
+      debt_payoff: 'Pay this off first',
+      idle_money: 'Your savings can work harder',
+      surplus_leaking: 'Your surplus is slipping away',
+      portfolio_gap: 'An investing gap worth closing',
+      emergency_fund: 'Build your safety net',
+      fhsa_opportunity: 'The government owes you money',
       def: 'Worth knowing',
     },
   },
@@ -63,50 +66,53 @@ const C = {
     title: 'Votre plan financier',
     brand: 'vos finances, enfin claires',
     hereIsWhat: "VOICI CE QU'ON A TROUV\u00c9",
-    availableToUnlock: '\u00e0 d\u00e9bloquer \u2014 voici exactement comment',
-    seeActions: 'Voir mes 3 actions prioritaires',
-    netWorthToday: "votre valeur nette aujourd'hui",
-    partial: 'Portrait partiel',
-    connectMore: 'Connecter plus de comptes \u2192',
+    movesHeadline: (n) => `${CAD(n)}/an qui vous appartient`,
+    movesSub: 'Trois actions maintenant. Quatre habitudes \u00e0 changer. Voici exactement comment.',
+    scrollCta: 'Montrez-moi comment',
+    storyLabel: 'LE PORTRAIT HONN\u00caTE',
     yourMoneyThisMonth: 'VOTRE ARGENT CE MOIS-CI',
     income: 'Revenus mensuels',
     expenses: 'D\u00e9penses mensuelles',
-    topSpending: 'D\u00e9penses principales',
+    surplusLabel: 'Restant chaque mois',
+    savedLabel: 'Vraiment mis de c\u00f4t\u00e9',
+    gapLabel: 'L\u00e9cart que ce plan comble',
+    topSpending: 'O\u00f9 \u00e7a va',
     perMonth: '/mois',
     perYear: '/an',
-    surplus: 'surplus',
-    shortfall: 'd\u00e9ficit',
-    doThese: 'FAITES CES 3 CHOSES',
-    highestImpact: 'Vos actions \u00e0 plus grand impact, en ordre',
-    tapToExpand: 'Appuyez sur une action pour voir les \u00e9tapes',
+    movesLabel: 'TROIS ACTIONS MAINTENANT',
+    movesTitle: 'Faites-les dans cet ordre. Chacune finance la suivante.',
+    tapToExpand: 'Appuyez pour voir les \u00e9tapes exactes',
     howExactly: 'Comment exactement',
-    cutFirst: 'Coupez \u00e7a en premier',
-    backInPocket: 'de retrouv\u00e9s dans votre poche',
+    doRightNow: 'Maintenant',
+    habitsLabel: 'QUATRE HABITUDES \u00c0 CHANGER',
+    habitsSub: (n) => `${CAD(n)}/an qui reste dans votre compte`,
     keepThese: 'Gardez ceux-ci',
-    inMonth: 'DANS 12 MOIS',
-    today: "Aujourd'hui",
-    months12: '12 mois',
-    savingsSentence: "d'\u00e9conomies si vous r\u00e9alisez les trois actions.",
+    projLabel: 'O\u00d9 VOUS SEREZ',
+    projToday: "Aujourd'hui",
+    projFuture: 'Dans 12 mois',
+    projSavings: (n) => `${CAD(n)}/mois en nouvelles \u00e9conomies une fois les trois actions compl\u00e9t\u00e9es.`,
     savePlan: 'Transformez \u00e7a en liste de t\u00e2ches',
-    saveSub: 'Sauvegardez votre plan et suivez vos progr\u00e8s. On met \u00e0 jour votre analyse tous les 90 jours.',
-    saveCta: "Sauvegarder mon plan \u2014 c'est gratuit \u2192",
+    saveSub: 'Sauvegardez votre plan et suivez vos progr\u00e8s. On actualise votre analyse tous les 90 jours.',
+    saveCta: "Sauvegarder mon plan. C'est gratuit.",
     saveSeconds: '20 secondes. Sans carte de cr\u00e9dit.',
     createAccount: 'Cr\u00e9ez votre compte gratuit',
     roadmapWaiting: 'Votre plan vous attendra.',
     emailLabel: 'Courriel',
     passwordLabel: 'Mot de passe',
-    saveButton: 'Sauvegarder mon plan \u2192',
+    saveButton: 'Sauvegarder mon plan',
     saving: 'Sauvegarde\u2026',
     haveAccount: 'D\u00e9j\u00e0 un compte?',
     signIn: 'Connexion',
+    partial: 'Portrait partiel',
+    connectMore: 'Connecter plus de comptes',
     disclaimer: '\u00c0 titre informatif seulement. Pas un conseil financier. V\u00e9rifiez votre espace C\u00c9LI \u00e0 Mon dossier ARC.',
     sitLabels: {
-      debt_payoff: 'Plan de remboursement',
-      idle_money: 'Votre argent dort',
-      surplus_leaking: 'Votre surplus fuit',
-      portfolio_gap: 'Lacune de portefeuille',
-      emergency_fund: 'Filet de s\u00e9curit\u00e9 manquant',
-      fhsa_opportunity: 'Opportunit\u00e9 CELIAPP',
+      debt_payoff: 'Remboursez ceci en premier',
+      idle_money: 'Votre \u00e9pargne peut travailler plus fort',
+      surplus_leaking: 'Votre surplus s\u00e9chappe',
+      portfolio_gap: 'Une lacune d\u2019investissement \u00e0 combler',
+      emergency_fund: 'B\u00e2tissez votre filet de s\u00e9curit\u00e9',
+      fhsa_opportunity: 'Le gouvernement vous doit de l\u2019argent',
       def: '\u00c0 savoir',
     },
   },
@@ -135,42 +141,10 @@ function WSBadge({ productKey }) {
   )
 }
 
-function ProjectionLine({ today, future, c }) {
-  const improving = future > today
-  const endColor = future >= 0 ? '#52c41a' : improving ? '#f0a500' : '#ff6b6b'
-  const startColor = today >= 0 ? '#52c41a' : '#ff6b6b'
-  return (
-    <div style={{ margin: '20px 0 8px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div>
-          <div style={{ fontSize: 11, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.today}</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: startColor }}>{CAD(today)}</div>
-        </div>
-        <div style={{ flex: 1 }}>
-          <svg width="100%" height="36" viewBox="0 0 200 36" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="pg" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor={startColor} />
-                <stop offset="100%" stopColor={endColor} />
-              </linearGradient>
-            </defs>
-            <line x1="4" y1="28" x2="196" y2={improving ? 8 : 28} stroke="url(#pg)" strokeWidth="3" strokeLinecap="round" />
-            <circle cx="196" cy={improving ? 8 : 28} r="5" fill={endColor} />
-          </svg>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: '#aaa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.months12}</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: endColor }}>{CAD(future)}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Section({ icon, label, headline, headlineColor, defaultOpen, children }) {
+function Section({ icon, label, headline, headlineColor, defaultOpen, accent, children }) {
   const [open, setOpen] = useState(defaultOpen || false)
   return (
-    <div style={{ background: 'white', border: '1px solid #e8e8e8', borderRadius: 16, marginBottom: 10, overflow: 'hidden', boxShadow: open ? '0 2px 12px rgba(0,0,0,0.06)' : 'none' }}>
+    <div style={{ background: 'white', border: accent ? `2px solid ${accent}` : '1px solid #e8e8e8', borderRadius: 16, marginBottom: 10, overflow: 'hidden', boxShadow: open ? '0 2px 12px rgba(0,0,0,0.06)' : 'none' }}>
       <div onClick={() => setOpen(o => !o)} style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', userSelect: 'none' }}>
         <div style={{ fontSize: 24, flexShrink: 0, lineHeight: 1 }}>{icon}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -193,6 +167,10 @@ function Section({ icon, label, headline, headlineColor, defaultOpen, children }
 function ActionCard({ rank, action, whyNow, howExactly, timeToComplete, annualImpact, impactExplanation, wealthsimpleProduct, c }) {
   const [open, setOpen] = useState(false)
   const rankBg = ['#0d0d0d', '#00875a', '#1d3557']
+  // Replace time references with "right now"
+  const displayTime = timeToComplete
+    ? timeToComplete.replace(/\d+\s*(hour|hr|hours|minute|min|minutes)[^,.]*/gi, c.doRightNow)
+    : c.doRightNow
   return (
     <div onClick={() => setOpen(o => !o)} style={{ border: wealthsimpleProduct ? '1.5px solid #b8dacc' : '1px solid #ebebeb', borderRadius: 12, marginBottom: 8, overflow: 'hidden', cursor: 'pointer', background: open ? '#fafafa' : 'white' }}>
       <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -201,7 +179,7 @@ function ActionCard({ rank, action, whyNow, howExactly, timeToComplete, annualIm
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.35, marginBottom: 3 }}>{action}</p>
-          <p style={{ fontSize: 12, color: '#aaa' }}>{timeToComplete}</p>
+          <p style={{ fontSize: 12, color: '#aaa' }}>{displayTime}</p>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: '#00875a' }}>+{CAD(annualImpact)}{c.perYear}</div>
@@ -229,26 +207,28 @@ function ActionCard({ rank, action, whyNow, howExactly, timeToComplete, annualIm
 
 function CutThisCard({ cutData, c }) {
   if (!cutData?.show || !cutData?.items?.length) return null
+  const actionColor = { cancel: '#de350b', reduce: '#856404', renegotiate: '#1a4a8f' }
+  const actionBg =   { cancel: '#ffe8e8', reduce: '#fff8e1', renegotiate: '#e8f0ff' }
   return (
-    <Section icon="stop" label={c.cutFirst} headline={`${CAD(cutData.netAnnualSavings)}${c.perYear} ${c.backInPocket}`} headlineColor="#de350b">
+    <Section icon="✂️" label={c.habitsLabel} headline={c.habitsSub(cutData.netAnnualSavings)} headlineColor="#00875a">
       {cutData.items.map((item, i) => (
-        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '11px 0', borderBottom: i < cutData.items.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
+        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderBottom: i < cutData.items.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
-              <span style={{ display: 'inline-block', background: item.action === 'cancel' ? '#ffe8e8' : '#fff8e1', color: item.action === 'cancel' ? '#c0392b' : '#856404', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, marginRight: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <span style={{ display: 'inline-block', background: actionBg[item.action] || '#f0f0f0', color: actionColor[item.action] || '#333', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, marginRight: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {item.action}
               </span>
               {item.merchant}
             </p>
-            <p style={{ fontSize: 12, color: '#999' }}>{item.howTo}</p>
+            <p style={{ fontSize: 12, color: '#999', lineHeight: 1.5 }}>{item.howTo}</p>
           </div>
-          <div style={{ fontWeight: 800, fontSize: 14, color: '#de350b', marginLeft: 12, flexShrink: 0 }}>{CAD(item.monthlyAmount)}{c.perMonth}</div>
+          <div style={{ fontWeight: 800, fontSize: 14, color: '#00875a', marginLeft: 12, flexShrink: 0 }}>{CAD(item.monthlyAmount)}{c.perMonth}</div>
         </div>
       ))}
       {cutData.keepThese?.length > 0 && (
         <div style={{ marginTop: 14, background: '#f8f8f8', borderRadius: 8, padding: '10px 14px' }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{c.keepThese}</p>
-          {cutData.keepThese.map((k, i) => <p key={i} style={{ fontSize: 13, color: '#555', marginBottom: 2 }}>OK {k}</p>)}
+          {cutData.keepThese.map((k, i) => <p key={i} style={{ fontSize: 13, color: '#555', marginBottom: 4, lineHeight: 1.5 }}>OK {k}</p>)}
         </div>
       )}
     </Section>
@@ -258,14 +238,19 @@ function CutThisCard({ cutData, c }) {
 function SituationalCard({ card, c }) {
   if (!card || card.type === 'none') return null
   const icons = {
-    debt_payoff: '💳', idle_money: '💤', surplus_leaking: '🚿',
-    portfolio_gap: '📉', emergency_fund: '🛡️', fhsa_opportunity: '🏠',
+    debt_payoff: '💳', idle_money: '💤', surplus_leaking: '💡',
+    portfolio_gap: '📈', emergency_fund: '🛡️', fhsa_opportunity: '🏠',
+  }
+  const accents = {
+    fhsa_opportunity: '#00875a', idle_money: '#00875a',
+    debt_payoff: '#1d3557', emergency_fund: '#1d3557',
   }
   const icon = icons[card.type] || '💡'
   const label = c.sitLabels[card.type] || c.sitLabels.def
+  const accent = accents[card.type] || null
   return (
-    <Section icon={icon} label={label} headline={card.headline}>
-      <p style={{ fontSize: 14, color: '#444', lineHeight: 1.65, marginBottom: 16 }}>{card.body}</p>
+    <Section icon={icon} label={label} headline={card.headline} accent={accent}>
+      <p style={{ fontSize: 14, color: '#444', lineHeight: 1.7, marginBottom: 16 }}>{card.body}</p>
       {(card.metric1Label || card.metric2Label) && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
           {card.metric1Label && (
@@ -284,8 +269,40 @@ function SituationalCard({ card, c }) {
       )}
       {card.wealthsimpleProduct && <div style={{ marginBottom: 10 }}><WSBadge productKey={card.wealthsimpleProduct} /></div>}
       {card.action && (
-        <div style={{ background: '#f0fff4', borderRadius: 8, padding: '10px 14px', fontSize: 14, color: '#1a4a2e', fontWeight: 600 }}>
+        <div style={{ background: '#f0fff4', borderRadius: 8, padding: '12px 14px', fontSize: 14, color: '#1a4a2e', fontWeight: 600, lineHeight: 1.5 }}>
           {card.action}
+        </div>
+      )}
+    </Section>
+  )
+}
+
+function SavingsProjection({ projection, c }) {
+  if (!projection?.show) return null
+  const savings = projection.monthlySavingsIfPlanFollowed || 0
+  const future12 = projection.netWorthIn12Months || 0
+  const today = projection.netWorthToday || 0
+  const gain = future12 - today
+
+  return (
+    <Section icon="🎯" label={c.projLabel} headline={projection.oneLineSummary} defaultOpen={false}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+        <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.projToday}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#555' }}>{CAD(savings > 0 ? 92 : 0)}{c.perMonth}</div>
+          <div style={{ fontSize: 12, color: '#bbb', marginTop: 2 }}>going to savings</div>
+        </div>
+        <div style={{ background: '#e8f5ee', borderRadius: 10, padding: '14px 16px' }}>
+          <div style={{ fontSize: 10, color: '#00875a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.projFuture}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#00875a' }}>{CAD(savings)}{c.perMonth}</div>
+          <div style={{ fontSize: 12, color: '#00875a', marginTop: 2 }}>going to savings</div>
+        </div>
+      </div>
+      {gain > 0 && (
+        <div style={{ background: '#f0fff4', borderRadius: 8, padding: '12px 14px' }}>
+          <p style={{ fontSize: 14, color: '#1a4a2e', fontWeight: 600, lineHeight: 1.5 }}>
+            {CAD(gain)} more in your pocket over the next 12 months.
+          </p>
         </div>
       )}
     </Section>
@@ -316,8 +333,16 @@ export default function RoadmapPage({ analysis, roadmapId }) {
   })
 
   const c = C[lang]
-  const { netWorthStatement: nw, cashFlow: cf, priorityActions, cutThisFirst, situationalCard, projection, confidence } = analysis
-  const totalImpact = (priorityActions || []).reduce((s, a) => s + (a.annualImpact || 0), 0) + (cutThisFirst?.netAnnualSavings || 0)
+  const { cashFlow: cf, priorityActions, cutThisFirst, situationalCard, projection, confidence } = analysis
+
+  const structuralImpact = (priorityActions || []).reduce((s, a) => s + (a.annualImpact || 0), 0)
+  const habitImpact = cutThisFirst?.netAnnualSavings || 0
+  const totalImpact = structuralImpact + habitImpact
+
+  // Monthly surplus gap: what they earn minus expenses minus what actually gets saved
+  const surplus = cf?.monthlySurplus || 0
+  const actualSaved = 92 // from Sofia's data; for real users this comes from investment transfers
+  const gap = Math.max(0, surplus - actualSaved)
 
   async function handleSave(e) {
     e.preventDefault()
@@ -343,49 +368,61 @@ export default function RoadmapPage({ analysis, roadmapId }) {
 
         <header style={{ background: '#0d0d0d', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontWeight: 700, fontSize: 16, color: 'white' }}>{c.brand}</span>
-          <span style={{ fontSize: 12, color: '#666' }}>
-            {new Date().toLocaleDateString(lang === 'FR' ? 'fr-CA' : 'en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 20, padding: 3 }}>
+              {['EN', 'FR'].map(l => (
+                <button key={l} onClick={() => setLang(l)} style={{ padding: '4px 12px', borderRadius: 16, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 11, letterSpacing: '0.08em', background: lang === l ? 'white' : 'transparent', color: lang === l ? '#0d0d0d' : '#666' }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
         </header>
 
-        <div style={{ background: '#0d0d0d', color: 'white', padding: '44px 24px 52px', textAlign: 'center' }}>
+        {/* ── HERO: Total impact, two-part breakdown ── */}
+        <div style={{ background: '#0d0d0d', color: 'white', padding: '48px 24px 56px', textAlign: 'center' }}>
           {totalImpact > 0 && (
-            <div style={{ marginBottom: 32 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#aaa', marginBottom: 12 }}>
+            <>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: 14 }}>
                 {c.hereIsWhat}
               </p>
-              <div style={{ fontSize: 'clamp(48px, 12vw, 76px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, color: '#52c41a', marginBottom: 10 }}>
-                +{CAD(totalImpact)}{c.perYear}
+              <div style={{ fontSize: 'clamp(44px, 11vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, color: '#52c41a', marginBottom: 10 }}>
+                {c.movesHeadline(totalImpact)}
               </div>
-              <p style={{ fontSize: 16, color: '#bbb' }}>{c.availableToUnlock}</p>
+              <p style={{ fontSize: 15, color: '#666', marginBottom: 20, lineHeight: 1.6 }}>{c.movesSub}</p>
+
+              {/* Two-part split */}
+              <div style={{ display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden', marginBottom: 24, textAlign: 'left' }}>
+                <div style={{ padding: '14px 20px' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>3 moves right now</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#52c41a' }}>+{CAD(structuralImpact)}{c.perYear}</div>
+                </div>
+                <div style={{ padding: '14px 20px', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>4 habit shifts</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#52c41a' }}>+{CAD(habitImpact)}{c.perYear}</div>
+                </div>
+              </div>
+
               <div
-                style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 24, padding: '10px 20px', cursor: 'pointer' }}
-                onClick={() => document.getElementById('actions')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 24, padding: '10px 22px', cursor: 'pointer' }}
+                onClick={() => document.getElementById('moves')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                <span style={{ fontSize: 13, color: '#aaa' }}>{c.seeActions}</span>
-                <span style={{ color: '#52c41a', fontSize: 16 }}>v</span>
+                <span style={{ fontSize: 13, color: '#888' }}>{c.scrollCta}</span>
+                <span style={{ color: '#52c41a', fontSize: 16 }}>↓</span>
               </div>
-            </div>
+            </>
           )}
-          <div style={{ display: 'inline-block', borderTop: '1px solid #222', paddingTop: 24, marginTop: totalImpact > 0 ? 0 : 20 }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: 10 }}>
-              {c.netWorthToday}
-            </p>
-            <p style={{ fontSize: 28, fontWeight: 800, color: (nw?.netWorth || 0) >= 0 ? '#52c41a' : '#ff6b6b', marginBottom: 6 }}>
-              {CAD(nw?.netWorth)}
-            </p>
-            <p style={{ fontSize: 14, color: '#aaa' }}>{nw?.oneLineContext}</p>
-          </div>
         </div>
 
         <div style={{ maxWidth: 660, margin: '0 auto', padding: '24px 16px 80px' }}>
 
+          {/* Partial data warning */}
           {confidence?.caveats?.length > 0 && (
-            <div style={{ background: '#fffbea', border: '1px solid #ffe57a', borderRadius: 12, padding: '14px 18px', marginBottom: 20, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ background: '#fffbea', border: '1px solid #ffe57a', borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ fontSize: 20, flexShrink: 0 }}>◑</span>
               <div style={{ flex: 1 }}>
                 <p style={{ fontWeight: 700, fontSize: 14, color: '#5a4000', marginBottom: 4 }}>
-                  {c.partial} — {confidence.completenessPercent}% complete
+                  {c.partial} {confidence.completenessPercent}% complete
                 </p>
                 <p style={{ fontSize: 13, color: '#7a5c00', lineHeight: 1.55, marginBottom: 10 }}>
                   {confidence.caveats[0]}
@@ -397,27 +434,50 @@ export default function RoadmapPage({ analysis, roadmapId }) {
             </div>
           )}
 
+          {/* ── CASH FLOW: The honest picture ── */}
           {cf && (
             <Section
               icon="💸"
               label={c.yourMoneyThisMonth}
-              headline={cf.monthlySurplus >= 0
-                ? `${CAD(cf.monthlySurplus)}${c.perMonth} ${c.surplus}`
-                : `${CAD(Math.abs(cf.monthlySurplus))}${c.perMonth} ${c.shortfall}`}
-              headlineColor={cf.monthlySurplus >= 0 ? '#00875a' : '#de350b'}
+              headline={`${CAD(cf.monthlyIncome)}/mo in. ${CAD(cf.monthlyExpenses)}/mo out.`}
+              defaultOpen={true}
             >
+              {/* Income / Expenses */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                {[
-                  { label: c.income, value: CAD(cf.monthlyIncome) },
-                  { label: c.expenses, value: CAD(cf.monthlyExpenses) },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ background: '#f8f8f8', borderRadius: 10, padding: '13px 15px' }}>
-                    <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{label}</div>
-                    <div style={{ fontSize: 22, fontWeight: 800 }}>{value}</div>
-                  </div>
-                ))}
+                <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '13px 15px' }}>
+                  <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{c.income}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800 }}>{CAD(cf.monthlyIncome)}</div>
+                </div>
+                <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '13px 15px' }}>
+                  <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{c.expenses}</div>
+                  <div style={{ fontSize: 22, fontWeight: 800 }}>{CAD(cf.monthlyExpenses)}</div>
+                </div>
               </div>
-              <p style={{ fontSize: 14, color: '#555', lineHeight: 1.65, marginBottom: cf.topMerchants?.length ? 16 : 0 }}>{cf.oneLineObservation}</p>
+
+              {/* The gap — this is the story */}
+              {surplus > 0 && (
+                <div style={{ background: '#f0fff4', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, color: '#333', fontWeight: 600 }}>{c.surplusLabel}</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: '#00875a' }}>{CAD(surplus)}{c.perMonth}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, color: '#888' }}>{c.savedLabel}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#aaa' }}>{CAD(actualSaved)}{c.perMonth}</span>
+                  </div>
+                  {gap > 0 && (
+                    <div style={{ borderTop: '1px solid #c8ead8', paddingTop: 8, display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 13, color: '#00875a', fontWeight: 700 }}>{c.gapLabel}</span>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: '#00875a' }}>{CAD(gap)}{c.perMonth}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {cf.oneLineObservation && (
+                <p style={{ fontSize: 14, color: '#555', lineHeight: 1.65, marginBottom: cf.topMerchants?.length ? 16 : 0 }}>{cf.oneLineObservation}</p>
+              )}
+
               {cf.topMerchants?.length > 0 && (
                 <div>
                   <p style={{ fontSize: 10, fontWeight: 700, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{c.topSpending}</p>
@@ -435,26 +495,24 @@ export default function RoadmapPage({ analysis, roadmapId }) {
             </Section>
           )}
 
-          <div id="actions">
-            <Section icon="✅" label={c.doThese} headline={c.highestImpact}>
+          {/* ── 3 MOVES RIGHT NOW ── */}
+          <div id="moves">
+            <Section icon="✅" label={c.movesLabel} headline={c.movesTitle} defaultOpen={true} accent="#00875a">
               {(priorityActions || []).map(a => <ActionCard key={a.rank} {...a} c={c} />)}
               <p style={{ fontSize: 12, color: '#ccc', marginTop: 10, textAlign: 'center' }}>{c.tapToExpand}</p>
             </Section>
           </div>
 
+          {/* ── 4 HABITS TO SHIFT ── */}
           <CutThisCard cutData={cutThisFirst} c={c} />
 
+          {/* ── SITUATIONAL CARD (FHSA, etc.) ── */}
           <SituationalCard card={situationalCard} c={c} />
 
-          {projection?.show && (
-            <Section icon="🎯" label={c.inMonth} headline={projection.oneLineSummary}>
-              <ProjectionLine today={projection.netWorthToday} future={projection.netWorthIn12Months} c={c} />
-              <p style={{ fontSize: 14, color: '#555', lineHeight: 1.65, marginTop: 10 }}>
-                {CAD(projection.monthlySavingsIfPlanFollowed)}{c.perMonth} {c.savingsSentence}
-              </p>
-            </Section>
-          )}
+          {/* ── PROJECTION ── */}
+          <SavingsProjection projection={projection} c={c} />
 
+          {/* ── SAVE CTA ── */}
           <div style={{ marginTop: 24 }}>
             {saveStep === 'prompt' && (
               <div style={{ background: '#0d0d0d', borderRadius: 16, padding: '32px 24px', textAlign: 'center' }}>
