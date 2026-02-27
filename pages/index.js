@@ -118,7 +118,7 @@ function AnalyzingScreen({ lang }) {
         setIdx(i => (i + 1) % steps.length)
         setFade(true)
       }, 300)
-    }, 2200)
+    }, 3143)
     return () => clearInterval(interval)
   }, [steps.length])
 
@@ -168,7 +168,7 @@ export default function Home() {
     fetchLinkToken(lang)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang])
-  const [step, setStep] = useState('questions')
+  const [step, setStep] = useState('landing')
   const [linkToken, setLinkToken] = useState(null)
   const [publicTokens, setPublicTokens] = useState([]) // support multiple accounts
   const [connectedAccounts, setConnectedAccounts] = useState([])
@@ -210,8 +210,7 @@ export default function Home() {
     setPublicTokens(prev => [...prev, public_token])
     setConnectedAccounts(prev => [...prev, { name: institutionName, token: public_token }])
     setStep('multi-account')
-    fetchLinkToken()
-  }, [])
+  }, [setStep])
 
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
     token: linkToken,
@@ -225,10 +224,6 @@ export default function Home() {
       return
     }
     setError(null)
-    setStep('connect')
-  }
-
-  async function handleConnect() {
     openPlaid()
   }
 
@@ -275,8 +270,8 @@ export default function Home() {
           </div>
         </header>
 
-        {/* ── STEP 1: Hero ── */}
-        {step === 'connect' && (
+        {/* ── STEP 1: Landing ── */}
+        {step === 'landing' && (
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '56px 24px' }}>
             <div style={{ maxWidth: 620, margin: '0 auto', textAlign: 'center' }}>
               <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: 20 }}>
@@ -289,28 +284,11 @@ export default function Home() {
                 {c.sub}
               </p>
               {error && <div style={{ background: '#fff3f3', border: '1px solid #ffd0d0', color: '#c0392b', padding: '12px 16px', borderRadius: 10, fontSize: 14, marginBottom: 20, maxWidth: 400, margin: '0 auto 20px' }}>{error}</div>}
-              <button onClick={() => openPlaid()} disabled={!plaidReady || !linkToken}
-                style={{ fontSize: 17, padding: '18px 40px', width: '100%', maxWidth: 380, background: '#0d0d0d', color: 'white', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer', opacity: (!plaidReady || !linkToken) ? 0.5 : 1 }}>
-                {!plaidReady ? c.ctaLoading : c.cta}
+              <button onClick={() => setStep('questions')}
+                style={{ fontSize: 17, padding: '18px 40px', width: '100%', maxWidth: 380, background: '#0d0d0d', color: 'white', border: 'none', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>
+                {lang === 'EN' ? 'Start Now →' : 'Commencer →'}
               </button>
               <p style={{ marginTop: 14, fontSize: 13, color: '#ccc' }}>{c.trust}</p>
-
-              {/* Demo shortcut */}
-              <div style={{ marginTop: 32, paddingTop: 28, borderTop: '1px solid #ebebeb' }}>
-                <p style={{ fontSize: 13, color: '#aaa', marginBottom: 12 }}>
-                  {c.demoNotReady}
-                </p>
-                <button
-                  onClick={handleDemo}
-                  disabled={demoLoading}
-                  style={{ fontSize: 14, padding: '13px 28px', background: 'white', color: '#0d0d0d', border: '2px solid #0d0d0d', borderRadius: 10, fontWeight: 700, cursor: demoLoading ? 'not-allowed' : 'pointer', opacity: demoLoading ? 0.6 : 1 }}
-                >
-                  {demoLoading ? c.demoBtnLoading : c.demoBtn}
-                </button>
-                <p style={{ fontSize: 12, color: '#ccc', marginTop: 8 }}>
-                  {c.demoSub}
-                </p>
-              </div>
 
               {/* Use case cards */}
               <div style={{ marginTop: 64, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, textAlign: 'left' }}>
@@ -399,10 +377,20 @@ export default function Home() {
                   <option value="PEI">Prince Edward Island</option>
                 </select>
               </div>
-              <button onClick={handleAnalyze}
-                style={{ width: '100%', padding: '16px', background: '#0d0d0d', color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
-                {lang === 'EN' ? 'Connect my bank →' : 'Connecter ma banque →'}
+              <button onClick={handleAnalyze} disabled={!plaidReady}
+                style={{ width: '100%', padding: '16px', background: '#0d0d0d', color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: !plaidReady ? 'not-allowed' : 'pointer', opacity: !plaidReady ? 0.6 : 1 }}>
+                {!plaidReady ? c.ctaLoading : (lang === 'EN' ? 'Connect my bank →' : 'Connecter ma banque →')}
               </button>
+
+              {/* Sofia demo — below the form */}
+              <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid #ebebeb', textAlign: 'center' }}>
+                <p style={{ fontSize: 13, color: '#aaa', marginBottom: 10 }}>{c.demoNotReady}</p>
+                <button onClick={handleDemo} disabled={demoLoading}
+                  style={{ fontSize: 14, padding: '12px 24px', background: 'white', color: '#0d0d0d', border: '2px solid #0d0d0d', borderRadius: 10, fontWeight: 700, cursor: demoLoading ? 'not-allowed' : 'pointer', opacity: demoLoading ? 0.6 : 1 }}>
+                  {demoLoading ? c.demoBtnLoading : c.demoBtn}
+                </button>
+                <p style={{ fontSize: 12, color: '#ccc', marginTop: 6 }}>{c.demoSub}</p>
+              </div>
             </div>
           </main>
         )}
