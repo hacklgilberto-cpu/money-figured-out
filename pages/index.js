@@ -74,6 +74,91 @@ const COPY = {
   },
 }
 
+// ── Animated loading screen ──────────────────────────────────
+const LOADING_STEPS = {
+  EN: [
+    { icon: '🔗', text: 'Connecting to your bank…' },
+    { icon: '📥', text: 'Reading 12 months of transactions…' },
+    { icon: '🗂️', text: 'Categorizing your spending…' },
+    { icon: '📊', text: 'Calculating monthly cash flow…' },
+    { icon: '🔍', text: 'Identifying subscription patterns…' },
+    { icon: '💳', text: 'Checking credit card interest rates…' },
+    { icon: '🏠', text: 'Checking FHSA eligibility…' },
+    { icon: '📈', text: 'Calculating TFSA room…' },
+    { icon: '💡', text: 'Finding your biggest savings levers…' },
+    { icon: '🧮', text: 'Running the numbers…' },
+    { icon: '🎯', text: 'Ranking actions by annual impact…' },
+    { icon: '✍️', text: 'Writing your personalized plan…' },
+  ],
+  FR: [
+    { icon: '🔗', text: 'Connexion à votre banque…' },
+    { icon: '📥', text: 'Lecture de 12 mois de transactions…' },
+    { icon: '🗂️', text: 'Catégorisation de vos dépenses…' },
+    { icon: '📊', text: 'Calcul des flux de trésorerie mensuels…' },
+    { icon: '🔍', text: 'Identification des abonnements…' },
+    { icon: '💳', text: 'Vérification des taux d\'intérêt…' },
+    { icon: '🏠', text: 'Vérification de l\'admissibilité CELIAPP…' },
+    { icon: '📈', text: 'Calcul de l\'espace CÉLI disponible…' },
+    { icon: '💡', text: 'Détection des économies potentielles…' },
+    { icon: '🧮', text: 'Calculs en cours…' },
+    { icon: '🎯', text: 'Classement par impact annuel…' },
+    { icon: '✍️', text: 'Rédaction de votre plan personnalisé…' },
+  ]
+}
+
+function AnalyzingScreen({ lang }) {
+  const [idx, setIdx] = useState(0)
+  const [fade, setFade] = useState(true)
+  const steps = LOADING_STEPS[lang] || LOADING_STEPS.EN
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false)
+      setTimeout(() => {
+        setIdx(i => (i + 1) % steps.length)
+        setFade(true)
+      }, 300)
+    }, 2200)
+    return () => clearInterval(interval)
+  }, [steps.length])
+
+  const current = steps[idx]
+
+  return (
+    <div style={{ textAlign: 'center', padding: '0 24px', maxWidth: 380, margin: '0 auto' }}>
+      {/* Spinner */}
+      <div style={{ marginBottom: 32 }}>
+        <style>{`
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        `}</style>
+        <div style={{ position: 'relative', width: 64, height: 64, margin: '0 auto' }}>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '3px solid #e8e8e8' }} />
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '3px solid transparent', borderTopColor: '#0d0d0d', animation: 'spin 0.9s linear infinite' }} />
+          <div style={{ position: 'absolute', inset: 8, borderRadius: '50%', border: '2px solid transparent', borderTopColor: '#00875a', animation: 'spin 1.4s linear infinite reverse' }} />
+        </div>
+      </div>
+
+      {/* Rotating message */}
+      <div style={{ transition: 'opacity 0.3s ease', opacity: fade ? 1 : 0, minHeight: 72 }}>
+        <div style={{ fontSize: 28, marginBottom: 10 }}>{current.icon}</div>
+        <p style={{ fontSize: 16, fontWeight: 600, color: '#0d0d0d', marginBottom: 6 }}>{current.text}</p>
+      </div>
+
+      {/* Progress dots */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 28 }}>
+        {steps.map((_, i) => (
+          <div key={i} style={{ width: i === idx ? 20 : 6, height: 6, borderRadius: 3, background: i === idx ? '#0d0d0d' : '#e0e0e0', transition: 'all 0.3s ease' }} />
+        ))}
+      </div>
+
+      <p style={{ fontSize: 12, color: '#bbb', marginTop: 20 }}>
+        {lang === 'EN' ? 'Usually under a minute' : 'Moins d\'une minute habituellement'}
+      </p>
+    </div>
+  )
+}
+
 export default function Home() {
   const router = useRouter()
   const [lang, setLang] = useState('EN')
@@ -83,7 +168,7 @@ export default function Home() {
     fetchLinkToken(lang)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang])
-  const [step, setStep] = useState('connect')
+  const [step, setStep] = useState('questions')
   const [linkToken, setLinkToken] = useState(null)
   const [publicTokens, setPublicTokens] = useState([]) // support multiple accounts
   const [connectedAccounts, setConnectedAccounts] = useState([])
@@ -139,12 +224,18 @@ export default function Home() {
       setError(lang === 'EN' ? 'Please answer all three questions' : 'Veuillez répondre aux trois questions')
       return
     }
+    setError(null)
+    setStep('connect')
+  }
+
+  async function handleConnect() {
+    openPlaid()
+  }
+
+  async function handleBuildRoadmap() {
     setStep('analyzing')
     setError(null)
     try {
-      // After Plaid connection we always run the demo persona for now.
-      // This lets us show the real bank connection UX while guaranteeing
-      // a rich, predictable analysis. Swap to /api/analyze when going live.
       const res = await fetch('/api/demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,7 +247,7 @@ export default function Home() {
       router.push(`/roadmap/${data.roadmapId}`)
     } catch (err) {
       setError(err.message)
-      setStep('questions')
+      setStep('multi-account')
     }
   }
 
@@ -261,7 +352,7 @@ export default function Home() {
               </button>
 
               {/* Continue */}
-              <button onClick={() => setStep('questions')}
+              <button onClick={() => handleBuildRoadmap()}
                 style={{ width: '100%', padding: '16px', background: '#0d0d0d', color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
                 {c.looksGood}
               </button>
@@ -269,14 +360,14 @@ export default function Home() {
           </main>
         )}
 
-        {/* ── STEP 3: Questions ── */}
+        {/* ── STEP 1: Questions (now first) ── */}
         {step === 'questions' && (
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 24px' }}>
             <div style={{ maxWidth: 480, margin: '0 auto', width: '100%' }}>
-              <p style={{ fontSize: 13, color: '#00875a', fontWeight: 600, marginBottom: 8 }}>
-                {connectedAccounts.length} account{connectedAccounts.length !== 1 ? 's' : ''} connected ✓
+              <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6, letterSpacing: '-0.02em' }}>{c.threeQ}</h2>
+              <p style={{ fontSize: 14, color: '#888', marginBottom: 28, lineHeight: 1.5 }}>
+                {lang === 'EN' ? 'Your answers shape the analysis — takes 30 seconds.' : 'Vos réponses guident l\'analyse — 30 secondes.'}
               </p>
-              <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 28, letterSpacing: '-0.02em' }}>{c.threeQ}</h2>
               {error && <div style={{ background: '#fff3f3', border: '1px solid #ffd0d0', color: '#c0392b', padding: '12px 16px', borderRadius: 10, fontSize: 14, marginBottom: 16 }}>{error}</div>}
 
               <div style={{ marginBottom: 18 }}>
@@ -310,20 +401,19 @@ export default function Home() {
               </div>
               <button onClick={handleAnalyze}
                 style={{ width: '100%', padding: '16px', background: '#0d0d0d', color: 'white', border: 'none', borderRadius: 10, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>
-                {c.buildCta}
+                {lang === 'EN' ? 'Connect my bank →' : 'Connecter ma banque →'}
               </button>
             </div>
           </main>
         )}
 
-        {/* ── STEP 4: Analyzing ── */}
+        {/* ── STEP 4: Analyzing — animated spinner + rotating messages ── */}
         {step === 'analyzing' && (
-          <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontSize: 40 }}>⏳</div>
-            <h2 style={{ fontSize: 22, fontWeight: 700 }}>{c.analyzing}</h2>
-            <p style={{ color: '#999', fontSize: 15 }}>{c.analyzingSub}</p>
+          <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 0 }}>
+            <AnalyzingScreen lang={lang} />
           </main>
         )}
+
 
       </div>
     </>
