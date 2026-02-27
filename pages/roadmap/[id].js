@@ -12,7 +12,7 @@ const C = {
     title: 'Your Financial Roadmap',
     brand: 'your money, figured out',
     hereIsWhat: "HERE'S WHAT WE FOUND",
-    movesHeadline: (n) => `${CAD(n)}/yr is yours to keep`,
+    movesHeadline: (n) => `${CAD(n)}/yr in potential savings`,
     movesSub: 'Three moves right now. Four habits to shift. Here is exactly how.',
     scrollCta: 'Show me how',
     storyLabel: 'THE HONEST PICTURE',
@@ -33,7 +33,7 @@ const C = {
     habitsLabel: 'FOUR HABITS TO SHIFT',
     habitsSub: (n) => `${CAD(n)}/yr stays in your account`,
     keepThese: 'Keep these',
-    projLabel: 'WHERE YOU WILL BE',
+    projLabel: 'YOUR SAVINGS JOURNEY',
     projToday: 'Today',
     projFuture: 'In 12 months',
     projSavings: (n) => `${CAD(n)}/mo in new savings once all three moves are done.`,
@@ -66,7 +66,7 @@ const C = {
     title: 'Votre plan financier',
     brand: 'vos finances, enfin claires',
     hereIsWhat: "VOICI CE QU'ON A TROUV\u00c9",
-    movesHeadline: (n) => `${CAD(n)}/an qui vous appartient`,
+    movesHeadline: (n) => `${CAD(n)}/an en \u00e9conomies potentielles`,
     movesSub: 'Trois actions maintenant. Quatre habitudes \u00e0 changer. Voici exactement comment.',
     scrollCta: 'Montrez-moi comment',
     storyLabel: 'LE PORTRAIT HONN\u00caTE',
@@ -87,7 +87,7 @@ const C = {
     habitsLabel: 'QUATRE HABITUDES \u00c0 CHANGER',
     habitsSub: (n) => `${CAD(n)}/an qui reste dans votre compte`,
     keepThese: 'Gardez ceux-ci',
-    projLabel: 'O\u00d9 VOUS SEREZ',
+    projLabel: 'VOTRE PROGRESSION',
     projToday: "Aujourd'hui",
     projFuture: 'Dans 12 mois',
     projSavings: (n) => `${CAD(n)}/mois en nouvelles \u00e9conomies une fois les trois actions compl\u00e9t\u00e9es.`,
@@ -280,16 +280,14 @@ function SituationalCard({ card, c }) {
 function SavingsProjection({ projection, c }) {
   if (!projection?.show) return null
   const savings = projection.monthlySavingsIfPlanFollowed || 0
-  const future12 = projection.netWorthIn12Months || 0
-  const today = projection.netWorthToday || 0
-  const gain = future12 - today
+  const gain = (projection.netWorthIn12Months || 0) - (projection.netWorthToday || 0)
 
   return (
     <Section icon="🎯" label={c.projLabel} headline={projection.oneLineSummary} defaultOpen={false}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
         <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '14px 16px' }}>
           <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.projToday}</div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#555' }}>{CAD(savings > 0 ? 92 : 0)}{c.perMonth}</div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: '#555' }}>$92{c.perMonth}</div>
           <div style={{ fontSize: 12, color: '#bbb', marginTop: 2 }}>going to savings</div>
         </div>
         <div style={{ background: '#e8f5ee', borderRadius: 10, padding: '14px 16px' }}>
@@ -301,7 +299,7 @@ function SavingsProjection({ projection, c }) {
       {gain > 0 && (
         <div style={{ background: '#f0fff4', borderRadius: 8, padding: '12px 14px' }}>
           <p style={{ fontSize: 14, color: '#1a4a2e', fontWeight: 600, lineHeight: 1.5 }}>
-            {CAD(gain)} more in your pocket over the next 12 months.
+            {CAD(gain)} more working for you over the next 12 months.
           </p>
         </div>
       )}
@@ -383,22 +381,22 @@ export default function RoadmapPage({ analysis, roadmapId }) {
         <div style={{ background: '#0d0d0d', color: 'white', padding: '48px 24px 56px', textAlign: 'center' }}>
           {totalImpact > 0 && (
             <>
-              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#666', marginBottom: 14 }}>
                 {c.hereIsWhat}
               </p>
               <div style={{ fontSize: 'clamp(44px, 11vw, 72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1, color: '#52c41a', marginBottom: 10 }}>
                 {c.movesHeadline(totalImpact)}
               </div>
-              <p style={{ fontSize: 15, color: '#666', marginBottom: 20, lineHeight: 1.6 }}>{c.movesSub}</p>
+              <p style={{ fontSize: 15, color: '#aaa', marginBottom: 20, lineHeight: 1.6 }}>{c.movesSub}</p>
 
               {/* Two-part split */}
               <div style={{ display: 'inline-grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 14, overflow: 'hidden', marginBottom: 24, textAlign: 'left' }}>
                 <div style={{ padding: '14px 20px' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>3 moves right now</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>3 moves right now</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: '#52c41a' }}>+{CAD(structuralImpact)}{c.perYear}</div>
                 </div>
                 <div style={{ padding: '14px 20px', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>4 habit shifts</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>4 habit shifts</div>
                   <div style={{ fontSize: 22, fontWeight: 800, color: '#52c41a' }}>+{CAD(habitImpact)}{c.perYear}</div>
                 </div>
               </div>
@@ -407,7 +405,7 @@ export default function RoadmapPage({ analysis, roadmapId }) {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 24, padding: '10px 22px', cursor: 'pointer' }}
                 onClick={() => document.getElementById('moves')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                <span style={{ fontSize: 13, color: '#888' }}>{c.scrollCta}</span>
+                <span style={{ fontSize: 13, color: '#aaa' }}>{c.scrollCta}</span>
                 <span style={{ color: '#52c41a', fontSize: 16 }}>↓</span>
               </div>
             </>
@@ -520,13 +518,13 @@ export default function RoadmapPage({ analysis, roadmapId }) {
                 <h3 style={{ fontSize: 22, fontWeight: 800, color: 'white', marginBottom: 10, letterSpacing: '-0.02em' }}>
                   {c.savePlan}
                 </h3>
-                <p style={{ color: '#666', fontSize: 15, lineHeight: 1.65, maxWidth: 360, margin: '0 auto 24px' }}>
+                <p style={{ color: '#aaa', fontSize: 15, lineHeight: 1.65, maxWidth: 360, margin: '0 auto 24px' }}>
                   {c.saveSub}
                 </p>
                 <button onClick={() => setSaveStep('form')} style={{ background: '#00875a', color: 'white', border: 'none', borderRadius: 10, padding: '16px 36px', fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', maxWidth: 320 }}>
                   {c.saveCta}
                 </button>
-                <p style={{ marginTop: 10, fontSize: 12, color: '#666' }}>{c.saveSeconds}</p>
+                <p style={{ marginTop: 10, fontSize: 12, color: '#aaa' }}>{c.saveSeconds}</p>
               </div>
             )}
             {saveStep === 'form' && (

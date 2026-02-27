@@ -118,7 +118,7 @@ function AnalyzingScreen({ lang }) {
         setIdx(i => (i + 1) % steps.length)
         setFade(true)
       }, 300)
-    }, 3143)
+    }, 6286)
     return () => clearInterval(interval)
   }, [steps.length])
 
@@ -372,16 +372,16 @@ export default function Home() {
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'block', fontWeight: 600, fontSize: 14, marginBottom: 8, color: '#333' }}>{c.provinceLabel}</label>
                 <select value={userInputs.province} onChange={e => setUserInputs(p => ({ ...p, province: e.target.value }))} style={inputStyle}>
-                  <option value="ON">Ontario</option>
-                  <option value="BC">British Columbia</option>
                   <option value="AB">Alberta</option>
-                  <option value="QC">Québec</option>
-                  <option value="SK">Saskatchewan</option>
+                  <option value="BC">British Columbia</option>
                   <option value="MB">Manitoba</option>
-                  <option value="NS">Nova Scotia</option>
                   <option value="NB">New Brunswick</option>
                   <option value="NL">Newfoundland &amp; Labrador</option>
+                  <option value="NS">Nova Scotia</option>
+                  <option value="ON">Ontario</option>
                   <option value="PEI">Prince Edward Island</option>
+                  <option value="QC">Québec</option>
+                  <option value="SK">Saskatchewan</option>
                 </select>
               </div>
               <button onClick={handleAnalyze} disabled={!plaidReady}
