@@ -181,14 +181,16 @@ export default function Home() {
 
   async function handleDemo() {
     setDemoLoading(true)
+    setStep('analyzing')
     try {
-      const res = await fetch('/api/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ province: 'ON', lang }) })
+      const res = await fetch('/api/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ province: userInputs.province || 'ON', lang }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Demo failed')
       if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('lang', lang)
       router.push(`/roadmap/${data.roadmapId}`)
     } catch (err) {
       setError(err.message)
+      setStep('questions')
       setDemoLoading(false)
     }
   }
@@ -209,8 +211,9 @@ export default function Home() {
     const institutionName = metadata?.institution?.name || 'Account'
     setPublicTokens(prev => [...prev, public_token])
     setConnectedAccounts(prev => [...prev, { name: institutionName, token: public_token }])
-    setStep('multi-account')
-  }, [setStep])
+    // Go straight to analyzing — skip multi-account friction
+    handleBuildRoadmapWithToken(public_token)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
     token: linkToken,
@@ -227,7 +230,7 @@ export default function Home() {
     openPlaid()
   }
 
-  async function handleBuildRoadmap() {
+  async function handleBuildRoadmapWithToken(token) {
     setStep('analyzing')
     setError(null)
     try {
@@ -242,8 +245,12 @@ export default function Home() {
       router.push(`/roadmap/${data.roadmapId}`)
     } catch (err) {
       setError(err.message)
-      setStep('multi-account')
+      setStep('questions') // go back to questions, not multi-account
     }
+  }
+
+  async function handleBuildRoadmap() {
+    return handleBuildRoadmapWithToken(null)
   }
 
   const inputStyle = { width: '100%', padding: '13px 16px', border: '1.5px solid #e0e0e0', borderRadius: 10, fontSize: 15, outline: 'none', boxSizing: 'border-box', background: 'white' }
