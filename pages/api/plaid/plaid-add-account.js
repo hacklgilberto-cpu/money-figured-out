@@ -26,7 +26,7 @@ export default async function handler(req, res) {
       if (instId) {
         const instRes = await plaidClient.institutionsGetById({
           institution_id: instId,
-          country_codes: ['CA', 'US'],
+          country_codes: ['US'],
         })
         institutionName = instRes.data.institution.name
       }
