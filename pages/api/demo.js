@@ -1,4 +1,4 @@
-import { buildSofiaProfile } from '../../lib/demo-persona'
+import { buildMarcusProfile } from '../../lib/demo-persona'
 import { generateFinancialAnalysis } from '../../lib/claude-analysis'
 import { db } from '../../lib/db'
 
@@ -6,14 +6,20 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   try {
-    const { province = 'ON', lang = 'EN' } = req.body || {}
-    const financialProfile = buildSofiaProfile(province)
+    const {
+      state = 'FL',
+      lang = 'EN',
+      payFrequency = 'biweekly',
+      daysToPayday = '7',
+    } = req.body || {}
+
+    const financialProfile = buildMarcusProfile(state)
 
     const userInputs = {
-      goal: lang === 'FR' ? 'Économiser pour une maison' : 'Save for a home',
-      timeline: '1–3 years',
-      province,
-      lang
+      payFrequency,
+      daysToPayday: parseInt(daysToPayday, 10) || 7,
+      state,
+      lang,
     }
 
     // Real Claude analysis on fake-but-realistic data
@@ -30,17 +36,25 @@ export default async function handler(req, res) {
 
     // Save roadmap
     const roadmapResult = await db.query(
-      'INSERT INTO roadmaps (user_id, analysis, is_current) VALUES (NULL, $1, true) RETURNING id',
-      [JSON.stringify({ ...analysis, isDemo: true })]
+      `INSERT INTO roadmaps (user_id, analysis, pay_frequency, days_to_payday, is_current)
+       VALUES (NULL, $1, $2, $3, true) RETURNING id`,
+      [JSON.stringify({ ...analysis, isDemo: true }), payFrequency, parseInt(daysToPayday, 10) || 7]
     )
     const roadmapId = roadmapResult.rows[0].id
 
-    // Save tasks (same as analyze.js — needed so signup can claim them)
+    // Save tasks
     for (const action of (analysis.priorityActions || [])) {
       await db.query(
-        `INSERT INTO tasks (user_id, roadmap_id, rank, action, math, time_to_complete, annual_impact)
+        `INSERT INTO tasks (user_id, roadmap_id, rank, action, how_exactly, time_to_complete, monthly_impact)
          VALUES (NULL, $1, $2, $3, $4, $5, $6)`,
-        [roadmapId, action.rank, action.action, action.impactExplanation || null, action.timeToComplete, action.annualImpact]
+        [
+          roadmapId,
+          action.rank,
+          action.action,
+          action.howExactly || null,
+          action.timeToComplete || null,
+          action.payPeriodImpact || 0,
+        ]
       )
     }
 
@@ -61,7 +75,7 @@ export default async function handler(req, res) {
             roadmapId, 'demo', t.transaction_id, t.account_id,
             acct.name || null, acct.type || null, acct.subtype || null,
             t.date, t.name, t.merchant_name || null, t.amount,
-            t.iso_currency_code || 'CAD',
+            t.iso_currency_code || 'USD',
             t.personal_finance_category?.primary || null,
             t.personal_finance_category?.detailed || null,
             t.payment_channel || null, t.pending || false

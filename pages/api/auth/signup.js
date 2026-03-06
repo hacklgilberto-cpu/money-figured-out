@@ -44,15 +44,17 @@ export default async function handler(req, res) {
     )
     if (roadmap.rows[0]) {
       const analysis = roadmap.rows[0].analysis
-      await db.query(
-        'INSERT INTO net_worth_snapshots (user_id, net_worth, assets, liabilities) VALUES ($1, $2, $3, $4)',
-        [
-          userId,
-          analysis.netWorthStatement.netWorth,
-          analysis.netWorthStatement.totalAssets,
-          analysis.netWorthStatement.totalLiabilities
-        ]
-      )
+      if (analysis?.netWorthStatement) {
+        await db.query(
+          'INSERT INTO net_worth_snapshots (user_id, net_worth, assets, liabilities) VALUES ($1, $2, $3, $4)',
+          [
+            userId,
+            analysis.netWorthStatement.netWorth,
+            analysis.netWorthStatement.totalAssets,
+            analysis.netWorthStatement.totalLiabilities
+          ]
+        )
+      }
     }
   }
 
