@@ -3,22 +3,153 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { usePlaidLink } from 'react-plaid-link'
+import FinancialChat from '../components/FinancialChat'
 
-const CAD = (n) => n != null
-  ? new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(n)
-  : '\u2014'
+const USD = (n) => n != null
+  ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+  : '—'
 
-// ── Copy / i18n ───────────────────────────────────────────────
+const OB = {
+  blue:      '#2B5BAE',
+  blueShade: '#1A3C6E',
+  yellow:    '#F7BB00',
+  teal:      '#00B5A0',
+  grey:      '#4A4A4A',
+}
+
+function LogoMark({ size = 28 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 110" fill="none">
+      <polygon points="28,10 52,8 52,42 20,55" fill="#00B5A0" />
+      <polygon points="52,8 78,18 72,48 52,42" fill="#F7BB00" />
+      <polygon points="20,55 52,42 48,90 18,75" fill="#2B5BAE" />
+      <polygon points="52,42 72,48 68,88 48,90" fill="#00B5A0" opacity="0.85" />
+      <polygon points="36,40 36,68 60,54" fill="white" opacity="0.95" />
+    </svg>
+  )
+}
+
+// ── Section accordion ──────────────────────────────────────────
+function Section({ icon, label, headline, headlineColor, defaultOpen, accent, children }) {
+  const [open, setOpen] = useState(defaultOpen || false)
+  return (
+    <div style={{ background: 'white', border: accent ? `2px solid ${accent}` : '1px solid #e8e8e8', borderRadius: 16, marginBottom: 10, overflow: 'hidden', boxShadow: open ? '0 2px 12px rgba(0,0,0,0.06)' : 'none' }}>
+      <div onClick={() => setOpen(o => !o)} style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', userSelect: 'none' }}>
+        <div style={{ fontSize: 24, flexShrink: 0, lineHeight: 1 }}>{icon}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c0c0c0', marginBottom: 5 }}>{label}</div>
+          <div style={{ fontSize: 17, fontWeight: 800, color: headlineColor || OB.grey, lineHeight: 1.25 }}>{headline}</div>
+        </div>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #e8e8e8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0, fontWeight: 700, background: open ? OB.blue : 'white', color: open ? 'white' : '#999', transition: 'all 0.15s' }}>
+          {open ? '×' : '+'}
+        </div>
+      </div>
+      {open && (
+        <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f5f5f5' }}>
+          <div style={{ paddingTop: 16 }}>{children}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Safe advance card ──────────────────────────────────────────
+function SafeAdvanceCard({ advanceData, c }) {
+  if (!advanceData) return null
+  const hasAdvance = advanceData.amount > 0
+  return (
+    <div style={{ background: hasAdvance ? '#EBF1F9' : '#F0FAF9', border: `2px solid ${hasAdvance ? OB.blue : OB.teal}`, borderRadius: 16, padding: '20px', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div style={{ fontSize: 22 }}>{hasAdvance ? '⚡' : '🛡️'}</div>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: hasAdvance ? OB.blue : OB.teal, marginBottom: 3 }}>
+            {c.safeAdvanceLabel}
+          </div>
+          <div style={{ fontSize: hasAdvance ? 28 : 18, fontWeight: 800, color: hasAdvance ? OB.blue : OB.teal, lineHeight: 1 }}>
+            {hasAdvance ? USD(advanceData.amount) : c.safeAdvanceNone}
+          </div>
+        </div>
+      </div>
+
+      {hasAdvance && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <div style={{ background: 'white', borderRadius: 10, padding: '12px 14px', textAlign: 'center', border: `1px solid ${OB.blue}20` }}>
+            <div style={{ fontSize: 10, color: OB.blue, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>OneBlinc advance</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: OB.teal }}>$0</div>
+            <div style={{ fontSize: 11, color: '#888' }}>interest-free</div>
+          </div>
+          <div style={{ background: 'white', borderRadius: 10, padding: '12px 14px', textAlign: 'center', border: '1px solid #ffd0d0' }}>
+            <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Bank overdraft</div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#c0392b' }}>$35+</div>
+            <div style={{ fontSize: 11, color: '#888' }}>per transaction</div>
+          </div>
+        </div>
+      )}
+
+      {hasAdvance && advanceData.reasoning && (
+        <p style={{ fontSize: 14, color: OB.blueShade, lineHeight: 1.6, marginBottom: 10 }}>{advanceData.reasoning}</p>
+      )}
+      {hasAdvance && advanceData.repaymentNote && (
+        <div style={{ background: `${OB.blue}12`, borderRadius: 8, padding: '10px 14px' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: OB.blue, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.repaymentNote}</p>
+          <p style={{ fontSize: 13, color: OB.blueShade, lineHeight: 1.55 }}>{advanceData.repaymentNote}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Spending snapshot ──────────────────────────────────────────
+function SpendingSnapshot({ snapshot, c }) {
+  if (!snapshot?.topCategories?.length) return null
+  const maxAmt = Math.max(...snapshot.topCategories.map(x => x.monthlyAmount || 0))
+  const barColors = [OB.blue, OB.teal, OB.yellow, '#7EB8E8', '#D4950A']
+  return (
+    <Section icon="📊" label={c.spendingLabel} headline={snapshot.oneLineObservation} defaultOpen={false}>
+      <div style={{ marginBottom: 8 }}>
+        {snapshot.topCategories.map((cat, i) => {
+          const percentage = maxAmt > 0 ? Math.round((cat.monthlyAmount / maxAmt) * 100) : 0
+          return (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: OB.grey }}>{cat.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: barColors[i % barColors.length] }}>{USD(cat.monthlyAmount)}{c.perMonth}</span>
+              </div>
+              <div style={{ height: 6, background: '#f0f0f0', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${percentage}%`, background: barColors[i % barColors.length], borderRadius: 3, transition: 'width 0.4s ease' }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      {snapshot.biggestDrain && (
+        <div style={{ background: '#fff3e0', borderRadius: 8, padding: '10px 14px' }}>
+          <p style={{ fontSize: 13, color: '#b45309', fontWeight: 600, lineHeight: 1.5 }}>
+            🔥 Biggest drain: {snapshot.biggestDrain} at {USD(snapshot.biggestDrainAmount)}{c.perMonth}
+          </p>
+        </div>
+      )}
+    </Section>
+  )
+}
 const C = {
   EN: {
-    pageTitle: 'My Plan \u2014 Your Money, Figured Out',
-    brand: 'your money, figured out',
+    pageTitle: 'My Plan — Money Figured Out',
     signOut: 'Sign out',
     planLabel: 'YOUR FINANCIAL PLAN',
     unlockedSoFar: 'unlocked so far',
     actionsDone: (d, t) => `${d} of ${t} actions done`,
-    stillAvailable: (a) => ` \u00b7 ${a}/yr still available`,
-    allDone: "\u{1F389} All done! You're in the top 1% of people who actually act on their finances.",
+    cashFlowLabel: 'YOUR MONEY THIS PAY PERIOD',
+    income: 'Monthly income',
+    expenses: 'Monthly expenses',
+    surplusLabel: 'Left over each month',
+    cashFlowStatus: { on_track: '✅ On track', tight: '⚠️ Tight', at_risk: '🔴 At risk' },
+    topSpending: 'Where it goes',
+    perMonth: '/mo',
+    safeAdvanceLabel: 'YOUR OVERDRAFT SHIELD',
+    safeAdvanceNone: "You're good to payday — no advance needed",
+    spendingLabel: 'SPENDING SNAPSHOT',
+    allDone: "All done! You're in the top 1% of people who actually act on their finances.",
     tabPlan: 'My Plan',
     tabBanks: 'Connected Banks',
     yourActions: 'YOUR ACTIONS',
@@ -28,10 +159,6 @@ const C = {
     howExactly: 'How exactly',
     markDone: 'Mark as done',
     confirmDone: (a) => `Mark "${a}\u2026" as done?`,
-    wsSection: 'YOUR WEALTHSIMPLE OPPORTUNITIES',
-    wsSectionSub: 'Based on your analysis, these accounts are the highest-return moves you can make right now \u2014 specific to your situation.',
-    wealthsimple: 'WEALTHSIMPLE',
-    estimatedBenefit: (a) => `Your estimated benefit: +${a}/year`,
     nextRefresh: 'Next analysis refresh',
     refreshReady: 'Ready for a refresh now',
     refreshIn: (d) => `Available in ${d} day${d === 1 ? '' : 's'}`,
@@ -40,7 +167,7 @@ const C = {
     connectedAccounts: 'CONNECTED ACCOUNTS',
     noAccounts: 'No accounts connected yet.',
     noAccountsSub: 'Connect a bank to generate your personalized roadmap.',
-    demoBank: 'Demo Bank (TD Canada Trust)',
+    demoBank: 'Demo Bank',
     demoLabel: 'DEMO',
     demoSub: 'Simulated data \u2014 connect a real bank to get your actual analysis',
     lastSynced: (d) => `Last synced ${d}`,
@@ -53,110 +180,260 @@ const C = {
     rerunAnalysis: 'Re-run your analysis for a more complete picture.',
     refreshAnalysis: 'Refresh my analysis \u2192',
     loading: 'Loading your plan\u2026',
-    celebrationMsg: (a) => `\u{1F389} Done! You just unlocked +${a}/year. Keep going.`,
+    celebrationMsg: (a) => `Done! You just unlocked +${a}/year. Keep going.`,
+    repaymentNote: 'Repayment note',
+    adviceIfZero: 'What to do instead',
+    runwayLabel: 'YOUR PAY PERIOD RUNWAY',
+    runwayMakeIt: "You're on track to payday",
+    runwayTight: "It'll be close to payday",
+    runwayShort: 'You may run short before payday',
+    runwayDailyBurn: 'Daily spend',
+    runwayCta: () => 'Need a cushion? OneBlinc advances start at $50 — interest-free.',
+    dayToday: 'Today',
+    dayPayday: 'Payday',
+    habitsLabel: 'CUT THIS FIRST',
+    habitsSub: (n) => `${USD(n)}/mo back in your pocket`,
+    keepThese: 'Worth keeping',
+    sitLabels: {
+      debt_payoff:        'Pay this off first',
+      subscription_creep: 'Subscriptions adding up',
+      delivery_habit:     'Delivery is your biggest drain',
+      tight_paycheck:     'Your paycheck is stretched thin',
+      phone_plan:         'Your phone plan is overpriced',
+      none:               'Worth knowing',
+    },
   },
-  FR: {
-    pageTitle: 'Mon Plan \u2014 Vos finances, enfin claires',
-    brand: 'vos finances, enfin claires',
-    signOut: 'D\u00e9connexion',
-    planLabel: 'VOTRE PLAN FINANCIER',
-    unlockedSoFar: 'd\u00e9bloqu\u00e9s jusqu\u2019ici',
-    actionsDone: (d, t) => `${d} action${d > 1 ? 's' : ''} sur ${t} compl\u00e9t\u00e9e${d > 1 ? 's' : ''}`,
-    stillAvailable: (a) => ` \u00b7 ${a}/an encore disponibles`,
-    allDone: "\u{1F389} Tout fait\u2009! Vous faites partie du 1\u00a0% qui passe vraiment \u00e0 l\u2019action.",
-    tabPlan: 'Mon Plan',
-    tabBanks: 'Banques connect\u00e9es',
-    yourActions: 'VOS ACTIONS',
-    noActions: "Pas encore de plan d\u2019action.",
-    generateCta: 'G\u00e9n\u00e9rer mon plan \u2192',
-    completed: 'COMPL\u00c9T\u00c9ES',
-    howExactly: 'Comment exactement',
-    markDone: 'Marquer comme fait',
-    confirmDone: (a) => `Marquer \u00ab\u00a0${a}\u2026\u00a0\u00bb comme fait\u00a0?`,
-    wsSection: 'VOS OPPORTUNIT\u00c9S WEALTHSIMPLE',
-    wsSectionSub: "Bas\u00e9 sur votre analyse, ces comptes sont les actions \u00e0 plus grand impact financier \u2014 sp\u00e9cifiques \u00e0 votre situation.",
-    wealthsimple: 'WEALTHSIMPLE',
-    estimatedBenefit: (a) => `Votre b\u00e9n\u00e9fice estim\u00e9 : +${a}/an`,
-    nextRefresh: "Prochain renouvellement d\u2019analyse",
-    refreshReady: 'Pr\u00eat pour un renouvellement',
-    refreshIn: (d) => `Disponible dans ${d} jour${d > 1 ? 's' : ''}`,
-    refreshCta: 'Renouveler \u2192',
-    dayOf: (d) => `Jour ${d} sur 30`,
-    connectedAccounts: 'COMPTES CONNECT\u00c9S',
-    noAccounts: 'Aucun compte connect\u00e9.',
-    noAccountsSub: 'Connectez une banque pour g\u00e9n\u00e9rer votre plan personnalis\u00e9.',
-    demoBank: 'Banque d\u00e9mo (TD Canada Trust)',
-    demoLabel: 'D\u00c9MO',
-    demoSub: 'Donn\u00e9es simul\u00e9es \u2014 connectez une vraie banque pour votre vraie analyse',
-    lastSynced: (d) => `Derni\u00e8re synchro ${d}`,
-    removeBank: 'Retirer',
-    confirmRemove: 'Retirer cette connexion bancaire\u00a0? Vos donn\u00e9es seront supprim\u00e9es.',
-    connectAnother: '+ Connecter une autre banque',
-    securityNote: 'Acc\u00e8s en lecture seulement, toujours.',
-    securityBody: "On utilise Plaid \u2014 la m\u00eame couche de s\u00e9curit\u00e9 bancaire utilis\u00e9e par des milliers d\u2019applis. On ne lit que l\u2019historique des transactions. On ne stocke jamais vos mots de passe, on ne d\u00e9place jamais d\u2019argent. Retirez n\u2019importe quelle connexion instantan\u00e9ment.",
-    addedAccount: 'Vous avez ajout\u00e9 un nouveau compte\u00a0?',
-    rerunAnalysis: 'Relancez votre analyse pour un portrait plus complet.',
-    refreshAnalysis: 'Renouveler mon analyse \u2192',
-    loading: 'Chargement de votre plan\u2026',
-    celebrationMsg: (a) => `\u{1F389} Fait\u2009! Vous venez de d\u00e9bloquer +${a}/an. Continuez\u2009!`,
+  ES: {
+    pageTitle: 'Mi Plan \u2014 Tu Dinero Bajo Control',
+    signOut: 'Cerrar sesi\u00f3n',
+    planLabel: 'TU PLAN FINANCIERO',
+    unlockedSoFar: 'desbloqueados hasta ahora',
+    actionsDone: (d, t) => `${d} de ${t} acciones hechas`,
+    stillAvailable: (a) => ` \u00b7 ${a}/a\u00f1o disponibles`,
+    allDone: '\u00a1Todo hecho! Est\u00e1s en el 1% que realmente act\u00faa sobre sus finanzas.',
+    tabPlan: 'Mi Plan',
+    tabBanks: 'Bancos Conectados',
+    yourActions: 'TUS ACCIONES',
+    noActions: 'A\u00fan no hay plan de acci\u00f3n.',
+    generateCta: 'Generar mi plan \u2192',
+    completed: 'COMPLETADAS',
+    howExactly: 'C\u00f3mo exactamente',
+    markDone: 'Marcar como hecho',
+    confirmDone: (a) => `\u00bfMarcar \u201c${a}\u2026\u201d como hecho?`,
+    nextRefresh: 'Pr\u00f3xima actualizaci\u00f3n del an\u00e1lisis',
+    refreshReady: 'Listo para actualizar ahora',
+    refreshIn: (d) => `Disponible en ${d} d\u00eda${d === 1 ? '' : 's'}`,
+    refreshCta: 'Actualizar \u2192',
+    dayOf: (d) => `D\u00eda ${d} de 30`,
+    connectedAccounts: 'CUENTAS CONECTADAS',
+    noAccounts: 'Ninguna cuenta conectada todav\u00eda.',
+    noAccountsSub: 'Conecta un banco para generar tu plan personalizado.',
+    demoBank: 'Banco Demo',
+    demoLabel: 'DEMO',
+    demoSub: 'Datos simulados \u2014 conecta un banco real para tu an\u00e1lisis real',
+    lastSynced: (d) => `\u00daltima sincronizaci\u00f3n ${d}`,
+    removeBank: 'Eliminar',
+    confirmRemove: '\u00bfEliminar esta conexi\u00f3n bancaria? Tus datos ser\u00e1n borrados.',
+    connectAnother: '+ Conectar otro banco',
+    securityNote: 'Acceso de solo lectura, siempre.',
+    securityBody: 'Usamos Plaid \u2014 la misma capa de seguridad bancaria usada por miles de apps. Solo leemos el historial de transacciones. Nunca guardamos contrase\u00f1as ni movemos dinero. Elimina cualquier conexi\u00f3n al instante.',
+    addedAccount: '\u00bfAgregaste una nueva cuenta?',
+    rerunAnalysis: 'Vuelve a ejecutar tu an\u00e1lisis para un panorama m\u00e1s completo.',
+    refreshAnalysis: 'Actualizar mi an\u00e1lisis \u2192',
+    loading: 'Cargando tu plan\u2026',
+    celebrationMsg: (a) => `\u00a1Hecho! Acabas de desbloquear +${a}/a\u00f1o. Sigue as\u00ed.`,
+    repaymentNote: 'Nota de reembolso',
+    adviceIfZero: 'Qu\u00e9 hacer en su lugar',
+    runwayLabel: 'TU QUINCENA D\u00cdA A D\u00cdA',
+    runwayMakeIt: 'Vas bien hasta el pago',
+    runwayTight: 'Va a estar justo hasta el pago',
+    runwayShort: 'Podr\u00edas quedarte corto antes del pago',
+    runwayDailyBurn: 'Gasto diario',
+    runwayCta: () => '\u00bfNecesitas un colch\u00f3n? Los adelantos de OneBlinc comienzan en $50 \u2014 sin intereses.',
+    dayToday: 'Hoy',
+    dayPayday: 'Pago',
+    habitsLabel: 'CORTA ESTO PRIMERO',
+    habitsSub: (n) => `${USD(n)}/mes de vuelta en tu bolsillo`,
+    keepThese: 'Vale la pena conservar',
+    sitLabels: {
+      debt_payoff:        'Paga esto primero',
+      subscription_creep: 'Las suscripciones se acumulan',
+      delivery_habit:     'El delivery es tu mayor gasto',
+      tight_paycheck:     'Tu cheque est\u00e1 muy ajustado',
+      phone_plan:         'Tu plan de tel\u00e9fono es muy caro',
+      none:               'Vale la pena saber',
+    },
+    cashFlowLabel: 'TU DINERO ESTE PERÍODO DE PAGO',
+    income: 'Ingresos mensuales',
+    expenses: 'Gastos mensuales',
+    surplusLabel: 'Lo que sobra cada mes',
+    cashFlowStatus: { on_track: '✅ En buen camino', tight: '⚠️ Ajustado', at_risk: '🔴 En riesgo' },
+    topSpending: 'A dónde va',
+    perMonth: '/mes',
+    safeAdvanceLabel: 'TU ESCUDO CONTRA SOBREGIROS',
+    safeAdvanceNone: 'Vas bien hasta el pago — no necesitas un adelanto',
+    spendingLabel: 'RESUMEN DE GASTOS',
   },
 }
 
-// ── Wealthsimple product definitions (bilingual) ──────────────
-const WS = {
-  fhsa: {
-    icon: '\u{1F3E0}',
-    EN: { name: 'First Home Savings Account (FHSA)', tagline: 'Tax-deductible contributions + tax-free withdrawals for your first home.', detail: 'Contribute up to $8,000/year (lifetime max $40,000). Every dollar reduces your taxable income \u2014 and when you buy, the withdrawal is completely tax-free.', cta: 'Open my FHSA at Wealthsimple', urgency: "Contribution room expires Dec\u00a031 \u2014 open now to lock in this year's $8,000." },
-    FR: { name: 'Compte d\u2019\u00e9pargne libre d\u2019imp\u00f4t pour l\u2019achat d\u2019une premi\u00e8re propri\u00e9t\u00e9 (CELIAPP)', tagline: 'Cotisations d\u00e9ductibles + retraits non imposables pour votre premi\u00e8re maison.', detail: "Cotisez jusqu\u2019\u00e0 8\u00a0000\u00a0$/an (max \u00e0 vie 40\u00a0000\u00a0$). Chaque dollar r\u00e9duit votre revenu imposable \u2014 et au moment d\u2019acheter, le retrait est enti\u00e8rement libre d\u2019imp\u00f4t.", cta: 'Ouvrir mon CELIAPP chez Wealthsimple', urgency: 'Les droits de cotisation expirent le 31\u00a0d\u00e9c \u2014 ouvrez maintenant pour bloquer vos 8\u00a0000\u00a0$ cette ann\u00e9e.' },
-    url: 'https://www.wealthsimple.com/en-ca/accounts/fhsa', color: '#00875a', bg: '#e8f5ee',
-  },
-  tfsa: {
-    icon: '\u{1F4C8}',
-    EN: { name: 'Tax-Free Savings Account (TFSA)', tagline: 'Every dollar of growth \u2014 interest, dividends, gains \u2014 is yours, tax-free.', detail: 'You have $7,000 in fresh contribution room this year alone. Unused room accumulates every year. A Wealthsimple TFSA invests automatically in diversified ETFs.', cta: 'Open my TFSA at Wealthsimple', urgency: 'Unused contribution room is money left on the table every year.' },
-    FR: { name: 'Compte d\u2019\u00e9pargne libre d\u2019imp\u00f4t (\u00c9LI)', tagline: 'Chaque dollar de croissance \u2014 int\u00e9r\u00eats, dividendes, gains \u2014 vous appartient, sans imp\u00f4t.', detail: 'Vous avez 7\u00a0000\u00a0$ de nouveaux droits de cotisation cette ann\u00e9e seulement. Les droits inutilis\u00e9s s\u2019accumulent chaque ann\u00e9e. Un \u00c9LI Wealthsimple investit automatiquement dans des FNB diversifi\u00e9s.', cta: 'Ouvrir mon \u00c9LI chez Wealthsimple', urgency: 'Les droits inutilis\u00e9s, c\u2019est de l\u2019argent laiss\u00e9 sur la table chaque ann\u00e9e.' },
-    url: 'https://www.wealthsimple.com/en-ca/accounts/tfsa', color: '#1d6b3e', bg: '#f0faf4',
-  },
-  rrsp: {
-    icon: '\u{1F3AF}',
-    EN: { name: 'RRSP', tagline: 'Cut your tax bill today, grow your savings for retirement.', detail: 'RRSP contributions reduce your taxable income now. The tax refund alone makes this one of the highest-return moves available.', cta: 'Open my RRSP at Wealthsimple', urgency: 'Maximize your contribution room before the March\u00a01 deadline.' },
-    FR: { name: 'REER', tagline: 'R\u00e9duisez vos imp\u00f4ts aujourd\u2019hui, faites cro\u00eetre votre \u00e9pargne-retraite.', detail: 'Les cotisations REER r\u00e9duisent votre revenu imposable maintenant. Le remboursement d\u2019imp\u00f4t \u00e0 lui seul en fait l\u2019un des meilleurs rendements disponibles.', cta: 'Ouvrir mon REER chez Wealthsimple', urgency: 'Maximisez vos droits de cotisation avant le 1er\u00a0mars.' },
-    url: 'https://www.wealthsimple.com/en-ca/accounts/rrsp', color: '#1a4a2e', bg: '#f0faf4',
-  },
-  save: {
-    icon: '\u{1F4B0}',
-    EN: { name: 'Wealthsimple Save', tagline: '2.75% interest on your savings \u2014 5x what most banks pay.', detail: 'CDIC insured up to $100,000. No minimum balance. No fees. Your emergency fund and short-term savings should be working much harder than a 0.5% savings account.', cta: 'Move my savings to Wealthsimple', urgency: 'Every month you wait is lost interest.' },
-    FR: { name: 'Wealthsimple \u00c9pargne', tagline: '2,75\u00a0% d\u2019int\u00e9r\u00eat sur votre \u00e9pargne \u2014 5x ce que paient la plupart des banques.', detail: 'Assur\u00e9 par la SADC jusqu\u2019\u00e0 100\u00a0000\u00a0$. Aucun solde minimum. Aucuns frais. Votre fonds d\u2019urgence devrait travailler bien plus fort qu\u2019un compte \u00e0 0,5\u00a0%.', cta: 'Transf\u00e9rer mon \u00e9pargne chez Wealthsimple', urgency: 'Chaque mois d\u2019attente, c\u2019est des int\u00e9r\u00eats perdus.' },
-    url: 'https://www.wealthsimple.com/en-ca/cash', color: '#0066cc', bg: '#eef4ff',
-  },
-  managed: {
-    icon: '\u{1F916}',
-    EN: { name: 'Wealthsimple Managed Investing', tagline: 'Set it and forget it. Your money invests itself.', detail: 'Just 0.5% annual fee. Diversified ETF portfolio built to your risk level, automatically rebalanced. Historically outperforms most individual investors.', cta: 'Start investing with Wealthsimple', urgency: 'The best time to start investing was yesterday.' },
-    FR: { name: 'Portefeuille g\u00e9r\u00e9 Wealthsimple', tagline: 'Automatique. Votre argent s\u2019investit tout seul.', detail: 'Seulement 0,5\u00a0% de frais annuels. Portefeuille de FNB diversifi\u00e9 adapt\u00e9 \u00e0 votre profil, r\u00e9\u00e9quilibr\u00e9 automatiquement. Historiquement sup\u00e9rieur \u00e0 la plupart des investisseurs individuels.', cta: 'Commencer \u00e0 investir chez Wealthsimple', urgency: 'Le meilleur moment pour commencer \u00e0 investir, c\u2019\u00e9tait hier.' },
-    url: 'https://www.wealthsimple.com/en-ca/invest', color: '#1d3557', bg: '#eef1f8',
-  },
-  self_directed: {
-    icon: '\u{1F4CA}',
-    EN: { name: 'Wealthsimple Self-Directed Trading', tagline: 'Commission-free stocks and ETFs. No hidden fees.', detail: 'Buy Canadian and US stocks, ETFs, and more with zero trading commissions. More money staying invested means more compounding over time.', cta: 'Open a Wealthsimple trade account', urgency: 'Every trade commission is a drag on your returns.' },
-    FR: { name: 'Courtage autog\u00e9r\u00e9 Wealthsimple', tagline: 'Actions et FNB sans commission. Aucuns frais cach\u00e9s.', detail: 'Achetez des actions canadiennes et am\u00e9ricaines, des FNB et plus encore \u2014 sans commission. Moins de frais, plus de capitalisation.', cta: 'Ouvrir un compte de courtage Wealthsimple', urgency: 'Chaque commission de transaction freine votre rendement.' },
-    url: 'https://www.wealthsimple.com/en-ca/trade', color: '#1d3557', bg: '#eef1f8',
-  },
+// ── Pay period runway card ─────────────────────────────────────
+function PayPeriodRunwayCard({ ps, advanceData, c }) {
+  if (!ps) return null
+
+  const days = ps.daysToPayday || 14
+  const dailyBurn = (ps.monthlyExpenses || 0) / 30
+
+  const cushionDays = ps.cashFlowStatus === 'on_track' ? days + 2
+    : ps.cashFlowStatus === 'tight' ? Math.floor(days * 0.7)
+    : Math.floor(days * 0.4)
+
+  const dots = Array.from({ length: days }, (_, i) => {
+    const d = i + 1
+    if (d <= Math.floor(cushionDays * 0.6)) return 'green'
+    if (d <= cushionDays) return 'yellow'
+    return 'red'
+  })
+
+  const allGreen = dots.every(d => d === 'green')
+  const hasRed = dots.some(d => d === 'red')
+  const statusText = allGreen ? c.runwayMakeIt : hasRed ? c.runwayShort : c.runwayTight
+  const statusColor = allGreen ? OB.teal : hasRed ? '#de350b' : '#856404'
+  const dotColors = { green: OB.teal, yellow: '#F7BB00', red: '#de350b' }
+
+  const rows = []
+  for (let i = 0; i < dots.length; i += 7) rows.push(dots.slice(i, i + 7))
+
+  return (
+    <div style={{ background: 'white', border: '1px solid #e8e8e8', borderRadius: 16, padding: '20px', marginBottom: 10 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c0c0c0', marginBottom: 10 }}>
+        {c.runwayLabel}
+      </div>
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#bbb', marginBottom: 6 }}>
+          <span>{c.dayToday}</span>
+          <span>{c.dayPayday}</span>
+        </div>
+        {rows.map((row, ri) => (
+          <div key={ri} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            {row.map((color, ci) => {
+              const dayNum = ri * 7 + ci + 1
+              return (
+                <div key={ci} style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: dotColors[color],
+                  opacity: color === 'green' ? 0.85 : 1,
+                  flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 700, color: 'white',
+                }}>
+                  {dayNum}
+                </div>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <p style={{ fontWeight: 700, fontSize: 14, color: statusColor }}>{statusText}</p>
+        <p style={{ fontSize: 12, color: '#aaa' }}>{c.runwayDailyBurn} ~{USD(dailyBurn)}/day</p>
+      </div>
+      <div style={{ background: '#EBF1F9', borderRadius: 10, padding: '10px 14px' }}>
+        <p style={{ fontSize: 13, color: OB.blue, lineHeight: 1.55, marginBottom: 8 }}>
+          {c.runwayCta()}
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.oneblinc.advance&hl=en_US"
+            target="_blank" rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: OB.blue, color: 'white', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}
+          >
+            <span>▶</span> Google Play
+          </a>
+          <a
+            href="https://apps.apple.com/us/app/oneblinc-salary-advances/id1593417965"
+            target="_blank" rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: OB.blue, color: 'white', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}
+          >
+            <span>🍎</span> App Store
+          </a>
+        </div>
+      </div>
+    </div>
+  )
 }
 
-function wsGet(key, lang) {
-  const def = WS[key]
-  if (!def) return null
-  const t = def[lang] || def.EN
-  return { ...t, icon: def.icon, url: def.url, color: def.color, bg: def.bg }
+// ── CutThisCard ────────────────────────────────────────────────
+function CutThisCard({ cutData, c }) {
+  if (!cutData?.show || !cutData?.items?.length) return null
+  const actionColor = { cancel: '#de350b', reduce: '#856404', renegotiate: OB.blueShade }
+  const actionBg   = { cancel: '#ffe8e8', reduce: '#fff8e1', renegotiate: '#e8f0ff' }
+  return (
+    <Section icon="✂️" label={c.habitsLabel} headline={c.habitsSub(cutData.netMonthlySavings)} headlineColor={OB.blue}>
+      {cutData.items.map((item, i) => (
+        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderBottom: i < cutData.items.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+              <span style={{ display: 'inline-block', background: actionBg[item.action] || '#f0f0f0', color: actionColor[item.action] || OB.grey, fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, marginRight: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {item.action}
+              </span>
+              {item.merchant}
+            </p>
+            <p style={{ fontSize: 12, color: '#999', lineHeight: 1.5 }}>{item.howTo}</p>
+          </div>
+          <div style={{ fontWeight: 800, fontSize: 14, color: OB.blue, marginLeft: 12, flexShrink: 0 }}>{USD(item.monthlyAmount)}{c.perMonth}</div>
+        </div>
+      ))}
+      {cutData.keepThese?.length > 0 && (
+        <div style={{ marginTop: 14, background: '#f8f8f8', borderRadius: 8, padding: '10px 14px' }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{c.keepThese}</p>
+          {cutData.keepThese.map((k, i) => (
+            <p key={i} style={{ fontSize: 13, color: '#555', marginBottom: 4, lineHeight: 1.5 }}>\u2713 {k}</p>
+          ))}
+        </div>
+      )}
+    </Section>
+  )
+}
+
+// ── SituationalCard ────────────────────────────────────────────
+function SituationalCard({ card, c }) {
+  if (!card || card.type === 'none') return null
+  const icons   = { debt_payoff: '\uD83D\uDCB3', subscription_creep: '\uD83D\uDCF1', delivery_habit: '\uD83C\uDF54', tight_paycheck: '\u26A0\uFE0F', phone_plan: '\uD83D\uDCDE' }
+  const accents = { debt_payoff: '#de350b', delivery_habit: '#e67e22', tight_paycheck: '#e67e22', subscription_creep: OB.blue, phone_plan: OB.blue }
+  return (
+    <Section icon={icons[card.type] || '\uD83D\uDCA1'} label={c.sitLabels[card.type] || c.sitLabels.none} headline={card.headline} accent={accents[card.type] || null}>
+      <p style={{ fontSize: 14, color: '#444', lineHeight: 1.7, marginBottom: 16 }}>{card.body}</p>
+      {(card.metric1Label || card.metric2Label) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+          {card.metric1Label && (
+            <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{card.metric1Label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>{card.metric1Value}</div>
+            </div>
+          )}
+          {card.metric2Label && (
+            <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{card.metric2Label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>{card.metric2Value}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {card.action && (
+        <div style={{ background: `${OB.blue}10`, borderRadius: 8, padding: '12px 14px', fontSize: 14, color: OB.blueShade, fontWeight: 600, lineHeight: 1.5 }}>
+          {card.action}
+        </div>
+      )}
+    </Section>
+  )
 }
 
 // ── TaskCard ──────────────────────────────────────────────────
-function TaskCard({ task, analysisAction, onComplete, onCompleted, lang }) {
+function TaskCard({ task, analysisAction, impactOverride, onComplete, onCompleted, lang }) {
   const [open, setOpen] = useState(false)
   const [completing, setCompleting] = useState(false)
   const done = task.completed
   const c = C[lang] || C.EN
-  const wsProduct = analysisAction?.wealthsimpleProduct
-  const wsDef = wsProduct ? wsGet(wsProduct, lang) : null
 
   const handleComplete = async (e) => {
     e.stopPropagation()
@@ -168,90 +445,48 @@ function TaskCard({ task, analysisAction, onComplete, onCompleted, lang }) {
     if (onCompleted) onCompleted(task.annual_impact)
   }
 
+  const rankColors = [OB.blue, OB.teal, OB.blueShade]
+  // Resolve display impact: DB value if set, else derive from analysis, else hide
+  const dbImpact = Number(task.annual_impact) || 0
+  const analysisImpact = impactOverride != null ? impactOverride : (analysisAction?.payPeriodImpact || 0) * 12
+  const displayImpact = dbImpact > 0 ? dbImpact : analysisImpact
+
   return (
-    <div style={{ background: 'white', borderRadius: 14, marginBottom: 10, overflow: 'hidden', border: done ? '1px solid #f0f0f0' : wsDef ? '1.5px solid #b8dacc' : '1px solid #e8e8e8', opacity: done ? 0.6 : 1, transition: 'all 0.3s' }}>
+    <div style={{ background: 'white', borderRadius: 14, marginBottom: 10, overflow: 'hidden', border: done ? '1px solid #f0f0f0' : '1px solid #e8e8e8', opacity: done ? 0.6 : 1, transition: 'all 0.3s' }}>
       <div onClick={() => !done && setOpen(o => !o)} style={{ padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14, cursor: done ? 'default' : 'pointer' }}>
-        <button onClick={handleComplete} style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, border: done ? 'none' : '2px solid #ddd', background: done ? '#00875a' : completing ? '#e8f5ee' : 'white', cursor: done ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
-          {done && <span style={{ color: 'white', fontSize: 14, fontWeight: 800 }}>v</span>}
+        <button onClick={handleComplete} style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, border: done ? 'none' : `2px solid #ddd`, background: done ? OB.teal : completing ? `${OB.teal}22` : 'white', cursor: done ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+          {done && <span style={{ color: 'white', fontSize: 14, fontWeight: 800 }}>&#10003;</span>}
         </button>
-        <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, background: ['#0d0d0d','#00875a','#1d3557'][task.rank - 1] || '#555', color: 'white', fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{task.rank}</div>
+        <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, background: rankColors[task.rank - 1] || OB.grey, color: 'white', fontSize: 12, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{task.rank}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.35, marginBottom: 3, textDecoration: done ? 'line-through' : 'none', color: done ? '#aaa' : '#0d0d0d' }}>{task.action}</p>
+          <p style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.35, marginBottom: 3, textDecoration: done ? 'line-through' : 'none', color: done ? '#aaa' : OB.grey }}>{task.action}</p>
           <p style={{ fontSize: 12, color: '#bbb' }}>{task.time_to_complete}</p>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: done ? '#aaa' : '#00875a' }}>+{CAD(task.annual_impact)}/yr</div>
+          {displayImpact > 0 && <div style={{ fontSize: 14, fontWeight: 800, color: done ? '#aaa' : OB.teal }}>+{USD(displayImpact)}/yr</div>}
         </div>
         {!done && (
-          <div style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0, fontWeight: 700, background: open ? '#0d0d0d' : 'white', color: open ? 'white' : '#ccc', transition: 'all 0.15s' }}>
-            {open ? 'x' : '+'}
+          <div style={{ width: 24, height: 24, borderRadius: '50%', border: '1.5px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0, fontWeight: 700, background: open ? OB.blue : 'white', color: open ? 'white' : '#ccc', transition: 'all 0.15s' }}>
+            {open ? '\u00d7' : '+'}
           </div>
         )}
-        {done && <div style={{ fontSize: 12, color: '#aaa', flexShrink: 0 }}>Done {task.completed_at ? new Date(task.completed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' }) : ''}</div>}
+        {done && <div style={{ fontSize: 12, color: '#aaa', flexShrink: 0 }}>Done {task.completed_at ? new Date(task.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</div>}
       </div>
       {open && !done && analysisAction && (
         <div style={{ padding: '0 18px 18px', borderTop: '1px solid #f5f5f5' }}>
-          {wsDef && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#e8f5ee', borderRadius: 6, padding: '4px 10px', marginTop: 14, marginBottom: 10 }}>
-              <div style={{ width: 16, height: 16, borderRadius: 3, background: wsDef.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: 'white', fontSize: 9, fontWeight: 800 }}>W</span></div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: wsDef.color }}>{wsDef.name}</span>
-            </div>
-          )}
-          {analysisAction.whyNow && <p style={{ fontSize: 13, color: '#888', fontStyle: 'italic', marginTop: wsDef ? 6 : 14, marginBottom: 12 }}>{analysisAction.whyNow}</p>}
+          {analysisAction.whyNow && <p style={{ fontSize: 13, color: '#888', fontStyle: 'italic', marginTop: 14, marginBottom: 12 }}>{analysisAction.whyNow}</p>}
           {analysisAction.howExactly && (
             <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '14px 16px', marginBottom: 12 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{c.howExactly}</p>
               <p style={{ fontSize: 14, color: '#333', lineHeight: 1.65 }}>{analysisAction.howExactly}</p>
             </div>
           )}
-          {analysisAction.impactExplanation && <p style={{ fontSize: 13, color: '#00875a', fontWeight: 600, marginBottom: wsDef ? 14 : 0 }}>📐 {analysisAction.impactExplanation}</p>}
-          {wsDef && (
-            <a href={wsDef.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: wsDef.color, color: 'white', borderRadius: 10, padding: '14px 20px', fontSize: 15, fontWeight: 700, textDecoration: 'none', marginTop: 4 }}>
-              <span style={{ fontSize: 16, fontWeight: 800, fontStyle: 'italic' }}>W</span> {wsDef.cta} →
-            </a>
-          )}
-          <button onClick={handleComplete} style={{ width: '100%', marginTop: 10, padding: '12px', borderRadius: 10, border: '1.5px solid #e0e0e0', background: 'white', fontSize: 14, fontWeight: 600, color: '#555', cursor: 'pointer' }}>
+          {analysisAction.impactExplanation && <p style={{ fontSize: 13, color: OB.teal, fontWeight: 600, marginBottom: 14 }}>&#128208; {analysisAction.impactExplanation}</p>}
+          <button onClick={handleComplete} style={{ width: '100%', marginTop: 10, padding: '12px', borderRadius: 10, border: '1.5px solid #e0e0e0', background: 'white', fontSize: 14, fontWeight: 600, color: '#555', cursor: 'pointer', fontFamily: 'inherit' }}>
             {c.markDone}
           </button>
         </div>
       )}
-    </div>
-  )
-}
-
-// ── WSOpportunityCard ─────────────────────────────────────────
-function WSOpportunityCard({ productKey, analysis, lang }) {
-  const def = wsGet(productKey, lang)
-  const c = C[lang] || C.EN
-  if (!def) return null
-  const matchingAction = (analysis?.priorityActions || []).find(a => a.wealthsimpleProduct === productKey)
-  const specificImpact = matchingAction?.annualImpact
-
-  return (
-    <div style={{ background: def.bg, border: `1.5px solid ${def.color}33`, borderRadius: 16, padding: '20px 22px', marginBottom: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-        <div style={{ fontSize: 28, flexShrink: 0, lineHeight: 1, marginTop: 2 }}>{def.icon}</div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <div style={{ width: 18, height: 18, borderRadius: 4, background: def.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: 'white', fontSize: 10, fontWeight: 800 }}>W</span></div>
-            <span style={{ fontSize: 11, fontWeight: 700, color: def.color, letterSpacing: '0.05em' }}>{c.wealthsimple}</span>
-          </div>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0d0d0d', marginBottom: 6, lineHeight: 1.3 }}>{def.name}</h3>
-          <p style={{ fontSize: 14, color: '#444', fontWeight: 600, marginBottom: 8 }}>{def.tagline}</p>
-          <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 12 }}>{def.detail}</p>
-          {specificImpact && (
-            <div style={{ background: 'white', borderRadius: 8, padding: '10px 14px', marginBottom: 12, border: `1px solid ${def.color}33` }}>
-              <p style={{ fontSize: 13, color: def.color, fontWeight: 700 }}>{c.estimatedBenefit(CAD(specificImpact))}</p>
-            </div>
-          )}
-          <div style={{ background: '#fff8e1', borderRadius: 8, padding: '8px 12px', marginBottom: 14 }}>
-            <p style={{ fontSize: 12, color: '#856404', fontWeight: 600 }}>⏰ {def.urgency}</p>
-          </div>
-          <a href={def.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: def.color, color: 'white', borderRadius: 10, padding: '14px 22px', fontSize: 15, fontWeight: 700, textDecoration: 'none', width: '100%', boxSizing: 'border-box' }}>
-            <span style={{ fontSize: 16, fontWeight: 800, fontStyle: 'italic' }}>W</span> {def.cta} →
-          </a>
-        </div>
-      </div>
     </div>
   )
 }
@@ -276,7 +511,7 @@ function AddBankButton({ onSuccess, lang }) {
   })
 
   return (
-    <button onClick={() => open()} disabled={!ready} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', width: '100%', padding: '14px', borderRadius: 10, border: '2px dashed #ddd', background: 'white', fontSize: 14, fontWeight: 700, color: '#555', cursor: !ready ? 'not-allowed' : 'pointer', opacity: !ready ? 0.5 : 1, transition: 'all 0.15s' }}>
+    <button onClick={() => open()} disabled={!ready} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', width: '100%', padding: '14px', borderRadius: 10, border: `2px dashed ${OB.blue}55`, background: 'white', fontSize: 14, fontWeight: 700, color: OB.blue, cursor: !ready ? 'not-allowed' : 'pointer', opacity: !ready ? 0.5 : 1, transition: 'all 0.15s', fontFamily: 'inherit' }}>
       {c.connectAnother}
     </button>
   )
@@ -296,17 +531,16 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState('plan')
   const [celebration, setCelebration] = useState(null)
 
-  // Read language from sessionStorage
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem('lang')
-      if (stored === 'FR' || stored === 'EN') setLang(stored)
+      if (stored === 'ES' || stored === 'EN') setLang(stored)
     } catch (_) {}
   }, [])
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/auth/signin')
-  }, [status])
+  }, [status]) // eslint-disable-line
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -319,27 +553,32 @@ export default function Dashboard() {
       setAccounts(a.accounts || [])
       if (rm?.analysis) { setAnalysis(rm.analysis); setRoadmapCreatedAt(rm.createdAt) }
       setLoading(false)
+    }).catch(err => {
+      console.error('Error loading dashboard data:', err)
+      setLoading(false)
     })
   }, [status])
 
   const c = C[lang] || C.EN
   const completedTasks = tasks.filter(t => t.completed)
   const pendingTasks = tasks.filter(t => !t.completed)
-  const completedImpact = completedTasks.reduce((s, t) => s + Number(t.annual_impact || 0), 0)
-  const totalImpact = tasks.reduce((s, t) => s + Number(t.annual_impact || 0), 0)
   const progress = tasks.length ? completedTasks.length / tasks.length : 0
 
-  const wsProducts = []
-  if (analysis) {
-    ;(analysis.priorityActions || []).forEach(a => {
-      if (a.wealthsimpleProduct && !wsProducts.includes(a.wealthsimpleProduct)) wsProducts.push(a.wealthsimpleProduct)
-    })
-    if (analysis.situationalCard?.wealthsimpleProduct && !wsProducts.includes(analysis.situationalCard.wealthsimpleProduct))
-      wsProducts.push(analysis.situationalCard.wealthsimpleProduct)
-  }
+  // Derive totals from analysis (source of truth — same as roadmap page)
+  // Falls back to DB task amounts only when no analysis is available
+  const actionImpactMonthly = (analysis?.priorityActions || []).reduce((s, a) => s + (a.payPeriodImpact || 0), 0)
+  const habitImpactMonthly  = analysis?.cutThisFirst?.netMonthlySavings || 0
+  const analysisTotalAnnual = (actionImpactMonthly + habitImpactMonthly) * 12
+  const tasksTotalAnnual    = tasks.reduce((s, t) => s + (Number(t.annual_impact) || 0), 0)
+  const totalPotential      = analysisTotalAnnual > 0 ? analysisTotalAnnual : tasksTotalAnnual
+
+  // Completed impact: count tasks done * their pro-rated share of total
+  const completedImpact = completedTasks.reduce((s, t) => s + (Number(t.annual_impact) || 0), 0)
 
   const actionByRank = {}
   ;(analysis?.priorityActions || []).forEach(a => { actionByRank[a.rank] = a })
+
+  const statusLabel = analysis?.paydaySummary?.cashFlowStatus ? c.cashFlowStatus[analysis.paydaySummary.cashFlowStatus] : null
 
   async function completeTask(taskId) {
     const res = await fetch(`/api/tasks/${taskId}/complete`, { method: 'POST' })
@@ -373,46 +612,67 @@ export default function Dashboard() {
       : []
 
   if (status === 'loading' || loading) {
-    return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', fontFamily: 'system-ui, sans-serif', color: '#888', fontSize: 14 }}>{c.loading}</div>
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F5F5', fontFamily: "'Nunito Sans', -apple-system, sans-serif", color: '#888', fontSize: 14 }}>
+        {c.loading}
+      </div>
+    )
   }
 
   return (
     <>
-      <Head><title>{c.pageTitle}</title></Head>
-      <div style={{ minHeight: '100vh', background: '#f5f5f5', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+      <Head>
+        <title>{c.pageTitle}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+      </Head>
+      <div style={{ minHeight: '100vh', background: '#F5F5F5', fontFamily: "'Nunito Sans', -apple-system, sans-serif" }}>
 
         {celebration && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: '#00875a', color: 'white', padding: '16px 24px', textAlign: 'center', fontSize: 15, fontWeight: 700 }}>
-            {c.celebrationMsg(CAD(celebration.amount))}
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: OB.teal, color: 'white', padding: '16px 24px', textAlign: 'center', fontSize: 15, fontWeight: 700 }}>
+            {c.celebrationMsg(USD(celebration.amount))}
           </div>
         )}
 
         {/* Header */}
-        <header style={{ background: '#0d0d0d', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 700, fontSize: 15, color: 'white', letterSpacing: '-0.01em' }}>{c.brand}</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <span style={{ fontSize: 12, color: '#555' }}>{session?.user?.email}</span>
-            <button onClick={() => signOut({ callbackUrl: '/' })} style={{ fontSize: 12, color: '#555', background: 'none', border: 'none', cursor: 'pointer' }}>{c.signOut}</button>
+        <header style={{ background: OB.blue, padding: '14px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `4px solid ${OB.yellow}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <LogoMark size={28} />
+            <span style={{ fontWeight: 900, fontSize: 18, color: 'white', letterSpacing: '-0.01em' }}>
+              One<span style={{ color: OB.yellow }}>Blinc</span>
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 3, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: 3 }}>
+              {['EN', 'ES'].map(l => (
+                <button key={l} onClick={() => setLang(l)} style={{ padding: '4px 12px', borderRadius: 16, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 11, letterSpacing: '0.08em', background: lang === l ? 'white' : 'transparent', color: lang === l ? OB.blue : 'rgba(255,255,255,0.7)', fontFamily: 'inherit' }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>{session?.user?.email}</span>
+            <button onClick={() => signOut({ callbackUrl: '/' })} style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', background: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 8, padding: '5px 12px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+              {c.signOut}
+            </button>
           </div>
         </header>
 
         {/* Hero */}
-        <div style={{ background: '#0d0d0d', color: 'white', padding: '32px 24px 36px' }}>
+        <div style={{ background: OB.blue, color: 'white', padding: '32px 24px 36px' }}>
           <div style={{ maxWidth: 660, margin: '0 auto' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#888', marginBottom: 10 }}>{c.planLabel}</p>
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 10 }}>{c.planLabel}</p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
-              <div style={{ fontSize: 38, fontWeight: 800, color: '#52c41a', letterSpacing: '-0.03em' }}>+{CAD(completedImpact)}/yr</div>
-              <span style={{ fontSize: 14, color: 'white' }}>{c.unlockedSoFar}</span>
+              <div style={{ fontSize: 38, fontWeight: 800, color: OB.yellow, letterSpacing: '-0.03em' }}>+{USD(totalPotential)}/yr</div>
+              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>potential savings</span>
             </div>
-            <p style={{ fontSize: 13, color: 'white', marginBottom: 18 }}>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 18 }}>
               {c.actionsDone(completedTasks.length, tasks.length)}
-              {totalImpact - completedImpact > 0 && c.stillAvailable(CAD(totalImpact - completedImpact))}
+              {completedImpact > 0 && ` · +${USD(completedImpact)}/yr unlocked`}
             </p>
-            <div style={{ background: '#222', borderRadius: 4, height: 6, overflow: 'hidden', maxWidth: 500 }}>
-              <div style={{ background: '#52c41a', height: '100%', width: `${progress * 100}%`, borderRadius: 4, transition: 'width 0.6s ease' }} />
+            <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 4, height: 6, overflow: 'hidden', maxWidth: 500 }}>
+              <div style={{ background: OB.yellow, height: '100%', width: `${progress * 100}%`, borderRadius: 4, transition: 'width 0.6s ease' }} />
             </div>
             {progress === 1 && tasks.length > 0 && (
-              <p style={{ marginTop: 12, fontSize: 14, color: '#52c41a', fontWeight: 600 }}>{c.allDone}</p>
+              <p style={{ marginTop: 12, fontSize: 14, color: OB.yellow, fontWeight: 600 }}>{c.allDone}</p>
             )}
           </div>
         </div>
@@ -421,7 +681,7 @@ export default function Dashboard() {
         <div style={{ background: 'white', borderBottom: '1px solid #f0f0f0', padding: '0 24px' }}>
           <div style={{ maxWidth: 660, margin: '0 auto', display: 'flex' }}>
             {[{ id: 'plan', label: c.tabPlan }, { id: 'banks', label: c.tabBanks }].map(tab => (
-              <button key={tab.id} onClick={() => setActiveSection(tab.id)} style={{ padding: '14px 20px', border: 'none', cursor: 'pointer', background: 'transparent', fontSize: 14, fontWeight: 600, color: activeSection === tab.id ? '#0d0d0d' : '#aaa', borderBottom: activeSection === tab.id ? '2px solid #0d0d0d' : '2px solid transparent', transition: 'all 0.15s' }}>
+              <button key={tab.id} onClick={() => setActiveSection(tab.id)} style={{ padding: '14px 20px', border: 'none', cursor: 'pointer', background: 'transparent', fontSize: 14, fontWeight: 700, color: activeSection === tab.id ? OB.blue : '#aaa', borderBottom: activeSection === tab.id ? `2px solid ${OB.blue}` : '2px solid transparent', transition: 'all 0.15s', fontFamily: 'inherit' }}>
                 {tab.label}
               </button>
             ))}
@@ -440,35 +700,104 @@ export default function Dashboard() {
                 {tasks.length === 0 && (
                   <div style={{ textAlign: 'center', padding: '48px 24px', background: 'white', borderRadius: 16, color: '#888' }}>
                     <p style={{ marginBottom: 16 }}>{c.noActions}</p>
-                    <a href="/" style={{ background: '#0d0d0d', color: 'white', padding: '14px 28px', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>{c.generateCta}</a>
+                    <a href="/" style={{ background: OB.blue, color: 'white', padding: '14px 28px', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>{c.generateCta}</a>
                   </div>
                 )}
 
                 {pendingTasks.map(task => (
-                  <TaskCard key={task.id} task={task} analysisAction={actionByRank[task.rank]} onComplete={completeTask} onCompleted={onCompleted} lang={lang} />
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    analysisAction={actionByRank[task.rank]}
+                    impactOverride={actionByRank[task.rank] ? (actionByRank[task.rank].payPeriodImpact || 0) * 12 : null}
+                    onComplete={completeTask}
+                    onCompleted={onCompleted}
+                    lang={lang}
+                  />
                 ))}
 
                 {completedTasks.length > 0 && (
                   <>
                     <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', margin: '24px 0 14px' }}>{c.completed}</p>
                     {completedTasks.map(task => (
-                      <TaskCard key={task.id} task={task} analysisAction={actionByRank[task.rank]} onComplete={completeTask} onCompleted={onCompleted} lang={lang} />
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        analysisAction={actionByRank[task.rank]}
+                        impactOverride={actionByRank[task.rank] ? (actionByRank[task.rank].payPeriodImpact || 0) * 12 : null}
+                        onComplete={completeTask}
+                        onCompleted={onCompleted}
+                        lang={lang}
+                      />
                     ))}
                   </>
                 )}
               </div>
 
-              {/* WS Opportunities */}
-              {wsProducts.length > 0 && (
-                <div style={{ marginBottom: 32 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: 5, background: '#00875a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ color: 'white', fontSize: 12, fontWeight: 800, fontStyle: 'italic' }}>W</span>
+              {/* Habit changes — Cut This First */}
+              <CutThisCard cutData={analysis?.cutThisFirst} c={c} />
+
+              {/* Situational card */}
+              <SituationalCard card={analysis?.situationalCard} c={c} />
+
+              {/* Pay period runway */}
+              <PayPeriodRunwayCard ps={analysis?.paydaySummary} advanceData={analysis?.safeAdvanceAmount} c={c} />
+
+              {/* Cash flow */}
+              {analysis?.paydaySummary && (
+                <Section icon="💸" label={c.cashFlowLabel} headline={analysis.paydaySummary.oneLineSummary || `${USD(analysis.paydaySummary.monthlyIncome)} in. ${USD(analysis.paydaySummary.monthlyExpenses)} out.`} defaultOpen={true}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                    <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '13px 15px' }}>
+                      <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{c.income}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800 }}>{USD(analysis.paydaySummary.monthlyIncome)}</div>
                     </div>
-                    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{c.wsSection}</p>
+                    <div style={{ background: '#f8f8f8', borderRadius: 10, padding: '13px 15px' }}>
+                      <div style={{ fontSize: 10, color: '#bbb', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>{c.expenses}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800 }}>{USD(analysis.paydaySummary.monthlyExpenses)}</div>
+                    </div>
                   </div>
-                  <p style={{ fontSize: 13, color: '#999', marginBottom: 16, lineHeight: 1.55 }}>{c.wsSectionSub}</p>
-                  {wsProducts.map(key => <WSOpportunityCard key={key} productKey={key} analysis={analysis} lang={lang} />)}
+                  {analysis.paydaySummary.monthlySurplus != null && (
+                    <div style={{ background: analysis.paydaySummary.monthlySurplus > 200 ? '#f0fff4' : analysis.paydaySummary.monthlySurplus > 0 ? '#fffbea' : '#fff3f3', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: statusLabel ? 8 : 0 }}>
+                        <span style={{ fontSize: 13, color: OB.grey, fontWeight: 600 }}>{c.surplusLabel}</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: analysis.paydaySummary.monthlySurplus > 0 ? OB.teal : '#de350b' }}>{USD(Math.abs(analysis.paydaySummary.monthlySurplus))}{c.perMonth}</span>
+                      </div>
+                      {statusLabel && <p style={{ fontSize: 13, color: '#555', marginBottom: 0 }}>{statusLabel}</p>}
+                    </div>
+                  )}
+                  {analysis.paydaySummary.topMerchants?.length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{c.topSpending}</p>
+                      {analysis.paydaySummary.topMerchants.map((m, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < analysis.paydaySummary.topMerchants.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: 14 }}>{m.name}</span>
+                            <span style={{ fontSize: 12, color: '#ccc', marginLeft: 8 }}>{m.category}</span>
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: 14 }}>{USD(m.monthlyAmount)}{c.perMonth}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Section>
+              )}
+
+              {/* Spending snapshot */}
+              <SpendingSnapshot snapshot={analysis?.spendingSnapshot} c={c} />
+
+              {/* Partial picture warning — bottom of plan, non-intrusive */}
+              {analysis?.confidence?.caveats?.length > 0 && (
+                <div style={{ background: '#fffbea', border: '1px solid #ffe57a', borderRadius: 12, padding: '14px 18px', marginBottom: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>&#9680;</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, color: '#5a4000', marginBottom: 4 }}>
+                      Partial picture &mdash; {analysis.confidence.completenessPercent}% complete
+                    </p>
+                    <p style={{ fontSize: 13, color: '#7a5c00', lineHeight: 1.55, marginBottom: 10 }}>{analysis.confidence.caveats[0]}</p>
+                    <button onClick={() => setActiveSection('banks')} style={{ background: OB.blue, color: 'white', fontSize: 12, fontWeight: 700, padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {c.connectAnother}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -476,19 +805,19 @@ export default function Dashboard() {
               <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', border: '1px solid #e8e8e8' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                   <div>
-                    <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>🔄 {c.nextRefresh}</p>
+                    <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4, color: OB.grey }}>&#128260; {c.nextRefresh}</p>
                     <p style={{ fontSize: 13, color: '#555' }}>
                       {daysUntil === null ? c.noActions : daysUntil === 0 ? c.refreshReady : c.refreshIn(daysUntil)}
                     </p>
                   </div>
                   {daysUntil === 0 && (
-                    <a href="/" style={{ background: '#0d0d0d', color: 'white', padding: '12px 18px', borderRadius: 10, textDecoration: 'none', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{c.refreshCta}</a>
+                    <a href="/" style={{ background: OB.blue, color: 'white', padding: '12px 18px', borderRadius: 10, textDecoration: 'none', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{c.refreshCta}</a>
                   )}
                 </div>
                 {daysUntil !== null && daysUntil > 0 && (
                   <>
                     <div style={{ marginTop: 14, background: '#f0f0f0', borderRadius: 8, height: 5, overflow: 'hidden' }}>
-                      <div style={{ background: '#52c41a', height: '100%', width: `${Math.min(100, ((30 - daysUntil) / 30) * 100)}%`, borderRadius: 8, transition: 'width 0.6s ease' }} />
+                      <div style={{ background: OB.teal, height: '100%', width: `${Math.min(100, ((30 - daysUntil) / 30) * 100)}%`, borderRadius: 8, transition: 'width 0.6s ease' }} />
                     </div>
                     <p style={{ fontSize: 11, color: '#bbb', marginTop: 6 }}>{c.dayOf(30 - daysUntil)}</p>
                   </>
@@ -512,21 +841,21 @@ export default function Dashboard() {
                   {displayAccounts.map(account => (
                     <div key={account.id} style={{ background: 'white', borderRadius: 14, padding: '16px 18px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e8e8e8' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🏦</div>
+                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: `${OB.blue}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>&#127982;</div>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                            <p style={{ fontWeight: 700, fontSize: 14 }}>{account.institution_name || 'Bank'}</p>
-                            {account.isDemo && <span style={{ fontSize: 10, fontWeight: 700, background: '#fff3cd', color: '#856404', padding: '2px 7px', borderRadius: 6 }}>{c.demoLabel}</span>}
+                            <p style={{ fontWeight: 700, fontSize: 14, color: OB.grey }}>{account.institution_name || 'Bank'}</p>
+                            {account.isDemo && <span style={{ fontSize: 10, fontWeight: 700, background: `${OB.yellow}44`, color: '#856404', padding: '2px 7px', borderRadius: 6 }}>{c.demoLabel}</span>}
                           </div>
                           <p style={{ fontSize: 12, color: '#aaa' }}>
                             {account.isDemo
                               ? c.demoSub
-                              : c.lastSynced(account.last_synced_at ? new Date(account.last_synced_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }) : '—')}
+                              : c.lastSynced(account.last_synced_at ? new Date(account.last_synced_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—')}
                           </p>
                         </div>
                       </div>
                       {!account.isDemo && (
-                        <button onClick={() => removeAccount(account.id)} style={{ fontSize: 12, color: '#de350b', background: 'none', border: '1px solid #de350b', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}>
+                        <button onClick={() => removeAccount(account.id)} style={{ fontSize: 12, color: '#de350b', background: 'none', border: '1px solid #de350b', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>
                           {c.removeBank}
                         </button>
                       )}
@@ -538,14 +867,14 @@ export default function Dashboard() {
               <AddBankButton onSuccess={onBankAdded} lang={lang} />
 
               <div style={{ marginTop: 16, padding: '14px 18px', background: '#f8f8f8', borderRadius: 12, fontSize: 12, color: '#888', lineHeight: 1.65 }}>
-                🔒 <strong style={{ color: '#555' }}>{c.securityNote}</strong> {c.securityBody}
+                &#128274; <strong style={{ color: '#555' }}>{c.securityNote}</strong> {c.securityBody}
               </div>
 
               {displayAccounts.length > 0 && (
-                <div style={{ marginTop: 20, background: '#0d0d0d', borderRadius: 16, padding: '22px', textAlign: 'center' }}>
-                  <p style={{ color: '#666', fontSize: 13, marginBottom: 4 }}>{c.addedAccount}</p>
+                <div style={{ marginTop: 20, background: OB.blue, borderRadius: 16, padding: '22px', textAlign: 'center' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, marginBottom: 4 }}>{c.addedAccount}</p>
                   <p style={{ color: 'white', fontWeight: 700, fontSize: 15, marginBottom: 16 }}>{c.rerunAnalysis}</p>
-                  <a href="/" style={{ display: 'inline-block', background: '#00875a', color: 'white', padding: '14px 28px', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontWeight: 700 }}>
+                  <a href="/" style={{ display: 'inline-block', background: OB.yellow, color: OB.blueShade, padding: '14px 28px', borderRadius: 10, textDecoration: 'none', fontSize: 14, fontWeight: 800 }}>
                     {c.refreshAnalysis}
                   </a>
                 </div>
@@ -554,6 +883,9 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Blinky chat — pre-loaded with this user's analysis */}
+      {analysis && <FinancialChat analysis={analysis} lang={lang === 'EN' ? 'en' : 'es'} />}
     </>
   )
 }

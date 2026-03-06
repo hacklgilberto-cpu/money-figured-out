@@ -3,6 +3,11 @@ import { buildFinancialProfile } from '../../lib/financial-profile'
 import { generateFinancialAnalysis } from '../../lib/claude-analysis'
 import { db } from '../../lib/db'
 
+// ── Currency formatter (USD) ───────────────────────────────────
+const USD = (n) => n != null
+  ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+  : '—'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
@@ -47,11 +52,43 @@ export default async function handler(req, res) {
     const roadmapId = roadmapResult.rows[0].id
 
     // Step 5: Save tasks
-    for (const action of analysis.priorityActions) {
+    let rank = 1
+    console.log('Creating tasks for analysis:', {
+      priorityActions: analysis.priorityActions?.length || 0,
+      cutThisFirst: analysis.cutThisFirst?.items?.length || 0,
+      situationalCard: analysis.situationalCard?.action ? 1 : 0
+    })
+    // Quick Wins (priorityActions)
+    for (const action of analysis.priorityActions || []) {
+      const annualImpact = action.annualImpact || (action.payPeriodImpact || 0) * 12
+      console.log(`Creating priority action ${rank}: ${action.action}, impact: ${annualImpact}`)
       await db.query(
         `INSERT INTO tasks (user_id, roadmap_id, rank, action, math, time_to_complete, annual_impact)
          VALUES (NULL, $1, $2, $3, $4, $5, $6)`,
-        [roadmapId, action.rank, action.action, action.math, action.timeToComplete, action.annualImpact]
+        [roadmapId, rank++, action.action, action.impactExplanation || action.math, action.timeToComplete, annualImpact]
+      )
+    }
+    // Cut This First (habits)
+    if (analysis.cutThisFirst?.show && analysis.cutThisFirst?.items?.length > 0) {
+      for (const item of analysis.cutThisFirst.items) {
+        const monthlySavings = item.monthlyAmount || 0
+        const annualImpact = monthlySavings * 12
+        const actionText = `${item.action} ${item.merchant}`
+        console.log(`Creating cutThisFirst action ${rank}: ${actionText}, impact: ${annualImpact}`)
+        await db.query(
+          `INSERT INTO tasks (user_id, roadmap_id, rank, action, time_to_complete, annual_impact)
+           VALUES (NULL, $1, $2, $3, $4, $5)`,
+          [roadmapId, rank++, actionText, item.howTo || '2-5 minutes', annualImpact]
+        )
+      }
+    }
+    // Hero action from situational card
+    if (analysis.situationalCard?.action) {
+      console.log(`Creating situational action ${rank}: ${analysis.situationalCard.action}`)
+      await db.query(
+        `INSERT INTO tasks (user_id, roadmap_id, rank, action, time_to_complete, annual_impact)
+         VALUES (NULL, $1, $2, $3, $4, $5)`,
+        [roadmapId, rank++, analysis.situationalCard.action, 'Varies', '10-30 minutes', 0] // No specific impact for hero action
       )
     }
 

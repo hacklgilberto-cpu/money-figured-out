@@ -42,7 +42,7 @@ const C = {
     cashFlowLabel: 'YOUR MONEY THIS PAY PERIOD',
     income: 'Monthly income',
     expenses: 'Monthly expenses',
-    surplusLabel: 'Left over each month',
+    surplusLabel: 'Left over each paycheck',
     cashFlowStatus: { on_track: '✅ On track', tight: '⚠️ Tight', at_risk: '🔴 At risk' },
     topSpending: 'Where it goes',
     perMonth: '/mo',
@@ -73,6 +73,14 @@ const C = {
     partial: 'Partial picture',
     connectMore: 'Connect more accounts',
     disclaimer: 'For informational purposes only. Not financial advice.',
+    runwayLabel: 'YOUR PAY PERIOD RUNWAY',
+    runwayMakeIt: "You're on track to payday",
+    runwayTight: "It'll be close to payday",
+    runwayShort: 'You may run short before payday',
+    runwayDailyBurn: 'Daily spend',
+    runwayCta: (amt) => `Need a cushion? OneBlinc advances start at ${amt} — interest-free.`,
+    dayToday: 'Today',
+    dayPayday: 'Payday',
     sitLabels: {
       debt_payoff:        'Pay this off first',
       subscription_creep: 'Subscriptions adding up',
@@ -91,7 +99,7 @@ const C = {
     cashFlowLabel: 'TU DINERO ESTE PERÍODO DE PAGO',
     income: 'Ingresos mensuales',
     expenses: 'Gastos mensuales',
-    surplusLabel: 'Lo que sobra cada mes',
+    surplusLabel: 'Lo que sobra cada quincena',
     cashFlowStatus: { on_track: '✅ En buen camino', tight: '⚠️ Ajustado', at_risk: '🔴 En riesgo' },
     topSpending: 'A dónde va',
     perMonth: '/mes',
@@ -122,6 +130,14 @@ const C = {
     partial: 'Imagen parcial',
     connectMore: 'Conectar más cuentas',
     disclaimer: 'Solo para fines informativos. No es asesoramiento financiero.',
+    runwayLabel: 'TU QUINCENA DÍA A DÍA',
+    runwayMakeIt: 'Vas bien hasta el pago',
+    runwayTight: 'Va a estar justo hasta el pago',
+    runwayShort: 'Podrías quedarte corto antes del pago',
+    runwayDailyBurn: 'Gasto diario',
+    runwayCta: (amt) => `¿Necesitas un colchón? Los adelantos de OneBlinc comienzan en ${amt} — sin intereses.`,
+    dayToday: 'Hoy',
+    dayPayday: 'Pago',
     sitLabels: {
       debt_payoff:        'Paga esto primero',
       subscription_creep: 'Las suscripciones se acumulan',
@@ -205,6 +221,102 @@ function SafeAdvanceCard({ advanceData, c }) {
           <p style={{ fontSize: 13, color: '#444', lineHeight: 1.55 }}>{advanceData.adviceIfZero}</p>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Pay period runway card ─────────────────────────────────────
+function PayPeriodRunwayCard({ ps, advanceData, c }) {
+  if (!ps) return null
+
+  const days = ps.daysToPayday || 14
+  const dailyBurn = (ps.monthlyExpenses || 0) / 30
+
+  // Estimate "days of cushion" from cashFlowStatus
+  const cushionDays = ps.cashFlowStatus === 'on_track' ? days + 2
+    : ps.cashFlowStatus === 'tight' ? Math.floor(days * 0.7)
+    : Math.floor(days * 0.4)
+
+  // Build dot array: green = comfortable, yellow = tight, red = projected short
+  const dots = Array.from({ length: days }, (_, i) => {
+    const d = i + 1
+    if (d <= Math.floor(cushionDays * 0.6)) return 'green'
+    if (d <= cushionDays) return 'yellow'
+    return 'red'
+  })
+
+  const allGreen = dots.every(d => d === 'green')
+  const hasRed = dots.some(d => d === 'red')
+  const statusText = allGreen ? c.runwayMakeIt : hasRed ? c.runwayShort : c.runwayTight
+  const statusColor = allGreen ? OB.teal : hasRed ? '#de350b' : '#856404'
+
+  const dotColors = { green: OB.teal, yellow: '#F7BB00', red: '#de350b' }
+
+  // Chunk into rows of 7 (week rows)
+  const rows = []
+  for (let i = 0; i < dots.length; i += 7) rows.push(dots.slice(i, i + 7))
+
+  return (
+    <div style={{ background: 'white', border: '1px solid #e8e8e8', borderRadius: 16, padding: '20px', marginBottom: 12 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c0c0c0', marginBottom: 10 }}>
+        {c.runwayLabel}
+      </div>
+
+      {/* Dot grid */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#bbb', marginBottom: 6 }}>
+          <span>{c.dayToday}</span>
+          <span>{c.dayPayday}</span>
+        </div>
+        {rows.map((row, ri) => (
+          <div key={ri} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            {row.map((color, ci) => {
+              const dayNum = ri * 7 + ci + 1
+              return (
+                <div key={ci} style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: dotColors[color],
+                  opacity: color === 'green' ? 0.85 : 1,
+                  flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 700, color: 'white',
+                }}>
+                  {dayNum}
+                </div>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Status + daily burn */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <p style={{ fontWeight: 700, fontSize: 14, color: statusColor }}>{statusText}</p>
+        <p style={{ fontSize: 12, color: '#aaa' }}>{c.runwayDailyBurn} ~{USD(dailyBurn)}/day</p>
+      </div>
+
+      {/* Always-visible subtle CTA */}
+      <div style={{ background: '#EBF1F9', borderRadius: 10, padding: '10px 14px' }}>
+        <p style={{ fontSize: 13, color: OB.blue, lineHeight: 1.55, marginBottom: 8 }}>
+          {c.runwayCta('$50')}
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.oneblinc.advance&hl=en_US"
+            target="_blank" rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: OB.blue, color: 'white', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}
+          >
+            <span>▶</span> Google Play
+          </a>
+          <a
+            href="https://apps.apple.com/us/app/oneblinc-salary-advances/id1593417965"
+            target="_blank" rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: OB.blue, color: 'white', borderRadius: 8, padding: '6px 12px', fontSize: 11, fontWeight: 700, textDecoration: 'none' }}
+          >
+            <span>🍎</span> App Store
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
@@ -452,26 +564,8 @@ export default function RoadmapPage({ analysis, roadmapId }) {
 
         <div style={{ maxWidth: 660, margin: '0 auto', padding: '24px 16px 80px' }}>
 
-          {/* Confidence warning */}
-          {confidence?.caveats?.length > 0 && (
-            <div style={{ background: '#fffbea', border: '1px solid #ffe57a', borderRadius: 12, padding: '14px 18px', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 20, flexShrink: 0 }}>◑</span>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 700, fontSize: 14, color: '#5a4000', marginBottom: 4 }}>
-                  {c.partial} — {confidence.completenessPercent}% complete
-                </p>
-                <p style={{ fontSize: 13, color: '#7a5c00', lineHeight: 1.55, marginBottom: 10 }}>{confidence.caveats[0]}</p>
-                {session?.user && (
-                  <a href="/dashboard" style={{ display: 'inline-block', background: OB.blue, color: 'white', fontSize: 12, fontWeight: 700, padding: '7px 14px', borderRadius: 8, textDecoration: 'none' }}>
-                    {c.connectMore}
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Safe advance — top of page OneBlinc hook */}
-          <SafeAdvanceCard advanceData={safeAdvanceAmount} c={c} />
+          {/* Pay period runway */}
+          <PayPeriodRunwayCard ps={ps} advanceData={safeAdvanceAmount} c={c} />
 
           {/* Cash flow */}
           {ps && (

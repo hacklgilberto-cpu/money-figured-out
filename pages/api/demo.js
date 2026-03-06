@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       state = 'FL',
       lang = 'EN',
       payFrequency = 'biweekly',
-      daysToPayday = '7',
+      daysToPayday = '5',
     } = req.body || {}
 
     const financialProfile = buildMarcusProfile(state)

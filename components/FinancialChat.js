@@ -27,6 +27,7 @@ const STRINGS = {
     paywallSub: "Cancel anytime",
     freeLeft: (n) => `${n} free question${n !== 1 ? "s" : ""} left`,
     errorGeneric: "Something went wrong. Try again in a moment.",
+    disclaimer: "Blinky is not a financial advisor and may make errors. Verify important decisions.",
   },
   es: {
     buttonLabel: "Pregunta a Blinky",
@@ -49,6 +50,7 @@ const STRINGS = {
     freeLeft: (n) =>
       `${n} pregunta${n !== 1 ? "s" : ""} gratis restante${n !== 1 ? "s" : ""}`,
     errorGeneric: "Algo salió mal. Intenta de nuevo en un momento.",
+    disclaimer: "Blinky no es un asesor financiero y puede cometer errores. Verifica las decisiones importantes.",
   },
 };
 
@@ -324,6 +326,13 @@ export default function FinancialChat({ analysis, lang = "en" }) {
       transition: background 0.15s; flex-shrink: 0;
     }
     .bw-close:hover { background: rgba(255,255,255,0.28); }
+
+    .bw-disclaimer {
+      padding: 5px 14px 7px;
+      font-size: 10px; color: #b0b8c8;
+      text-align: center; background: #fff;
+      line-height: 1.45; flex-shrink: 0;
+    }
   `;
 
   return (
@@ -433,6 +442,11 @@ export default function FinancialChat({ analysis, lang = "en" }) {
                 </button>
                 <div className="bw-gate-sub">{t.paywallSub}</div>
               </div>
+            )}
+
+            {/* Disclaimer */}
+            {!gate && (
+              <div className="bw-disclaimer">{t.disclaimer}</div>
             )}
 
             {/* Input bar */}
