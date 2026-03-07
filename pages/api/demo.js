@@ -2,13 +2,23 @@ import { buildMarcusProfile } from '../../lib/demo-persona'
 import { generateFinancialAnalysis } from '../../lib/claude-analysis'
 import { db } from '../../lib/db'
 
+export const maxDuration = 60
+
+async function withRetry(fn) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try { return await fn() } catch (err) {
+      if (attempt === 3 || !String(err.message).includes('overload')) throw err
+      await new Promise(r => setTimeout(r, attempt * 8000))
+    }
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
   try {
     const {
       state = 'FL',
-      lang = 'EN',
       payFrequency = 'biweekly',
       daysToPayday = '5',
     } = req.body || {}
@@ -19,31 +29,25 @@ export default async function handler(req, res) {
       payFrequency,
       daysToPayday: parseInt(daysToPayday, 10) || 7,
       state,
-      lang,
     }
 
-    // Real Claude analysis on fake-but-realistic data
-    let analysis
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        analysis = await generateFinancialAnalysis(financialProfile, userInputs)
-        break
-      } catch (err) {
-        if (attempt === 3 || !String(err.message).includes('overload')) throw err
-        await new Promise(r => setTimeout(r, attempt * 8000))
-      }
-    }
+    // Generate both EN and ES analyses in parallel
+    const [analysisEN, analysisES] = await Promise.all([
+      withRetry(() => generateFinancialAnalysis(financialProfile, { ...userInputs, lang: 'EN' })),
+      withRetry(() => generateFinancialAnalysis(financialProfile, { ...userInputs, lang: 'ES' })),
+    ])
+    const analysis = { en: analysisEN, es: analysisES, isDemo: true }
 
     // Save roadmap
     const roadmapResult = await db.query(
       `INSERT INTO roadmaps (user_id, analysis, pay_frequency, days_to_payday, is_current)
        VALUES (NULL, $1, $2, $3, true) RETURNING id`,
-      [JSON.stringify({ ...analysis, isDemo: true }), payFrequency, parseInt(daysToPayday, 10) || 7]
+      [JSON.stringify(analysis), payFrequency, parseInt(daysToPayday, 10) || 7]
     )
     const roadmapId = roadmapResult.rows[0].id
 
-    // Save tasks
-    for (const action of (analysis.priorityActions || [])) {
+    // Save tasks (always based on EN analysis)
+    for (const action of (analysisEN.priorityActions || [])) {
       await db.query(
         `INSERT INTO tasks (user_id, roadmap_id, rank, action, how_exactly, time_to_complete, monthly_impact)
          VALUES (NULL, $1, $2, $3, $4, $5, $6)`,
@@ -84,7 +88,7 @@ export default async function handler(req, res) {
       } catch (_) {}
     }
 
-    res.json({ roadmapId, analysis, isDemo: true })
+    res.json({ roadmapId, analysis })
 
   } catch (error) {
     console.error('Demo analysis error:', error)

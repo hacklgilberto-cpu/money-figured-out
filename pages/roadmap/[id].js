@@ -89,6 +89,14 @@ const C = {
       phone_plan:         'Your phone plan is overpriced',
       none:               'Worth knowing',
     },
+    actionLabels: { cancel: 'Cancel', reduce: 'Reduce', renegotiate: 'Renegotiate' },
+    biggestDrain: 'Biggest drain',
+    biggestDrainAt: 'at',
+    perDay: '/day',
+    interestFree: 'interest-free',
+    bankOverdraft: 'Bank overdraft',
+    perTransaction: 'per transaction',
+    oneBlinc: 'OneBlinc advance',
   },
   ES: {
     title: 'El panorama de tu quincena',
@@ -146,6 +154,14 @@ const C = {
       phone_plan:         'Tu plan de teléfono es muy caro',
       none:               'Vale la pena saber',
     },
+    actionLabels: { cancel: 'Cancelar', reduce: 'Reducir', renegotiate: 'Renegociar' },
+    biggestDrain: 'Mayor gasto',
+    biggestDrainAt: 'en',
+    perDay: '/día',
+    interestFree: 'sin intereses',
+    bankOverdraft: 'Sobregiro bancario',
+    perTransaction: 'por transacción',
+    oneBlinc: 'Adelanto OneBlinc',
   },
 }
 
@@ -194,14 +210,14 @@ function SafeAdvanceCard({ advanceData, c }) {
       {hasAdvance && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
           <div style={{ background: 'white', borderRadius: 10, padding: '12px 14px', textAlign: 'center', border: `1px solid ${OB.blue}20` }}>
-            <div style={{ fontSize: 10, color: OB.blue, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>OneBlinc advance</div>
+            <div style={{ fontSize: 10, color: OB.blue, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.oneBlinc}</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: OB.teal }}>$0</div>
-            <div style={{ fontSize: 11, color: '#888' }}>interest-free</div>
+            <div style={{ fontSize: 11, color: '#888' }}>{c.interestFree}</div>
           </div>
           <div style={{ background: 'white', borderRadius: 10, padding: '12px 14px', textAlign: 'center', border: '1px solid #ffd0d0' }}>
-            <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Bank overdraft</div>
+            <div style={{ fontSize: 10, color: '#c0392b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{c.bankOverdraft}</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: '#c0392b' }}>$35+</div>
-            <div style={{ fontSize: 11, color: '#888' }}>per transaction</div>
+            <div style={{ fontSize: 11, color: '#888' }}>{c.perTransaction}</div>
           </div>
         </div>
       )}
@@ -292,7 +308,7 @@ function PayPeriodRunwayCard({ ps, advanceData, c }) {
       {/* Status + daily burn */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <p style={{ fontWeight: 700, fontSize: 14, color: statusColor }}>{statusText}</p>
-        <p style={{ fontSize: 12, color: '#aaa' }}>{c.runwayDailyBurn} ~{USD(dailyBurn)}/day</p>
+        <p style={{ fontSize: 12, color: '#aaa' }}>{c.runwayDailyBurn} ~{USD(dailyBurn)}{c.perDay}</p>
       </div>
 
       {/* Always-visible subtle CTA */}
@@ -371,7 +387,7 @@ function CutThisCard({ cutData, c }) {
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
               <span style={{ display: 'inline-block', background: actionBg[item.action] || '#f0f0f0', color: actionColor[item.action] || OB.grey, fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6, marginRight: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                {item.action}
+                {c.actionLabels?.[item.action] || item.action}
               </span>
               {item.merchant}
             </p>
@@ -448,7 +464,7 @@ function SpendingSnapshot({ snapshot, c }) {
       {snapshot.biggestDrain && (
         <div style={{ background: '#fff3e0', borderRadius: 8, padding: '10px 14px' }}>
           <p style={{ fontSize: 13, color: '#b45309', fontWeight: 600, lineHeight: 1.5 }}>
-            🔥 Biggest drain: {snapshot.biggestDrain} at {USD(snapshot.biggestDrainAmount)}{c.perMonth}
+            🔥 {c.biggestDrain}: {snapshot.biggestDrain} {c.biggestDrainAt} {USD(snapshot.biggestDrainAmount)}{c.perMonth}
           </p>
         </div>
       )}
@@ -480,7 +496,8 @@ export default function RoadmapPage({ analysis, roadmapId }) {
   })
 
   const c = C[lang]
-  const { paydaySummary: ps, safeAdvanceAmount, priorityActions, cutThisFirst, situationalCard, spendingSnapshot, confidence } = analysis
+  const activeAnalysis = analysis.en ? (lang === 'ES' ? analysis.es : analysis.en) : analysis
+  const { paydaySummary: ps, safeAdvanceAmount, priorityActions, cutThisFirst, situationalCard, spendingSnapshot, confidence } = activeAnalysis
   const actionImpact = (priorityActions || []).reduce((s, a) => s + (a.payPeriodImpact || 0), 0)
   const habitImpact  = cutThisFirst?.netMonthlySavings || 0
   const totalImpact  = actionImpact + habitImpact

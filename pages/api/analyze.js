@@ -34,17 +34,21 @@ export default async function handler(req, res) {
     const financialProfile = profiles.length === 1 ? profiles[0] : mergeProfiles(profiles)
     const itemId = itemIds[0]
 
-    // Step 3: Run Claude analysis (retry on overload)
-    let analysis
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        analysis = await generateFinancialAnalysis(financialProfile, userInputs)
-        break
-      } catch (err) {
-        if (attempt === 3 || !String(err.message).includes('overload')) throw err
-        await new Promise(r => setTimeout(r, attempt * 8000))
+    // Step 3: Run Claude analysis in both EN and ES in parallel (retry on overload)
+    async function withRetry(fn) {
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try { return await fn() } catch (err) {
+          if (attempt === 3 || !String(err.message).includes('overload')) throw err
+          await new Promise(r => setTimeout(r, attempt * 8000))
+        }
       }
     }
+
+    const [analysisEN, analysisES] = await Promise.all([
+      withRetry(() => generateFinancialAnalysis(financialProfile, { ...userInputs, lang: 'EN' })),
+      withRetry(() => generateFinancialAnalysis(financialProfile, { ...userInputs, lang: 'ES' })),
+    ])
+    const analysis = { en: analysisEN, es: analysisES }
 
     // Step 4: Save roadmap to DB (user_id NULL until they sign up — "claimed" on signup)
     const roadmapResult = await db.query(
@@ -53,16 +57,16 @@ export default async function handler(req, res) {
     )
     const roadmapId = roadmapResult.rows[0].id
 
-    // Step 5: Save tasks
+    // Step 5: Save tasks (always based on EN analysis)
     let rank = 1
     console.log('Creating tasks for analysis:', {
-      priorityActions: analysis.priorityActions?.length || 0,
-      cutThisFirst: analysis.cutThisFirst?.items?.length || 0,
-      situationalCard: analysis.situationalCard?.action ? 1 : 0
+      priorityActions: analysisEN.priorityActions?.length || 0,
+      cutThisFirst: analysisEN.cutThisFirst?.items?.length || 0,
+      situationalCard: analysisEN.situationalCard?.action ? 1 : 0
     })
 
     // Quick Wins (priorityActions)
-    for (const action of analysis.priorityActions || []) {
+    for (const action of analysisEN.priorityActions || []) {
       const annualImpact = action.annualImpact || (action.payPeriodImpact || 0) * 12
       console.log(`Creating priority action ${rank}: ${action.action}, impact: ${annualImpact}`)
       await db.query(
@@ -73,8 +77,8 @@ export default async function handler(req, res) {
     }
 
     // Cut This First (habits)
-    if (analysis.cutThisFirst?.show && analysis.cutThisFirst?.items?.length > 0) {
-      for (const item of analysis.cutThisFirst.items) {
+    if (analysisEN.cutThisFirst?.show && analysisEN.cutThisFirst?.items?.length > 0) {
+      for (const item of analysisEN.cutThisFirst.items) {
         const monthlySavings = item.monthlyAmount || 0
         const annualImpact = monthlySavings * 12
         const actionText = `${item.action} ${item.merchant}`
@@ -88,12 +92,12 @@ export default async function handler(req, res) {
     }
 
     // Hero action from situational card — FIXED: removed extra parameter
-    if (analysis.situationalCard?.action) {
-      console.log(`Creating situational action ${rank}: ${analysis.situationalCard.action}`)
+    if (analysisEN.situationalCard?.action) {
+      console.log(`Creating situational action ${rank}: ${analysisEN.situationalCard.action}`)
       await db.query(
         `INSERT INTO tasks (user_id, roadmap_id, rank, action, time_to_complete, annual_impact)
          VALUES (NULL, $1, $2, $3, $4, $5)`,
-        [roadmapId, rank++, analysis.situationalCard.action, '10-30 minutes', 0]
+        [roadmapId, rank++, analysisEN.situationalCard.action, '10-30 minutes', 0]
       )
     }
 
@@ -140,10 +144,11 @@ export default async function handler(req, res) {
     res.json({ roadmapId, analysis })
 
   } catch (error) {
-    console.error('Analysis pipeline error:', error)
+    const plaidDetail = error.response?.data?.error_message || error.response?.data?.display_message
+    console.error('Analysis pipeline error:', plaidDetail || error.message, error.response?.data || '')
     res.status(500).json({
       error: 'Analysis failed',
-      detail: process.env.NODE_ENV === 'development' ? error.message : 'Please try again'
+      detail: plaidDetail || error.message || 'Please try again'
     })
   }
 }
