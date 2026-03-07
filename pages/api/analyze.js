@@ -3,6 +3,8 @@ import { buildFinancialProfile } from '../../lib/financial-profile'
 import { generateFinancialAnalysis } from '../../lib/claude-analysis'
 import { db } from '../../lib/db'
 
+export const maxDuration = 60
+
 // ── Currency formatter (USD) ───────────────────────────────────
 const USD = (n) => n != null
   ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
@@ -58,6 +60,7 @@ export default async function handler(req, res) {
       cutThisFirst: analysis.cutThisFirst?.items?.length || 0,
       situationalCard: analysis.situationalCard?.action ? 1 : 0
     })
+
     // Quick Wins (priorityActions)
     for (const action of analysis.priorityActions || []) {
       const annualImpact = action.annualImpact || (action.payPeriodImpact || 0) * 12
@@ -68,6 +71,7 @@ export default async function handler(req, res) {
         [roadmapId, rank++, action.action, action.impactExplanation || action.math, action.timeToComplete, annualImpact]
       )
     }
+
     // Cut This First (habits)
     if (analysis.cutThisFirst?.show && analysis.cutThisFirst?.items?.length > 0) {
       for (const item of analysis.cutThisFirst.items) {
@@ -82,13 +86,14 @@ export default async function handler(req, res) {
         )
       }
     }
-    // Hero action from situational card
+
+    // Hero action from situational card — FIXED: removed extra parameter
     if (analysis.situationalCard?.action) {
       console.log(`Creating situational action ${rank}: ${analysis.situationalCard.action}`)
       await db.query(
         `INSERT INTO tasks (user_id, roadmap_id, rank, action, time_to_complete, annual_impact)
          VALUES (NULL, $1, $2, $3, $4, $5)`,
-        [roadmapId, rank++, analysis.situationalCard.action, 'Varies', '10-30 minutes', 0] // No specific impact for hero action
+        [roadmapId, rank++, analysis.situationalCard.action, '10-30 minutes', 0]
       )
     }
 
