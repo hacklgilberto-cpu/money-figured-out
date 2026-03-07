@@ -246,7 +246,7 @@ export default function Home() {
     setStep('analyzing')
     setError(null)
     try {
-      const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publicToken: token, ...userInputs, lang }) })
+      const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ public_token: token, userInputs: { ...userInputs, lang } }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Analysis failed')
       if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('lang', lang)
