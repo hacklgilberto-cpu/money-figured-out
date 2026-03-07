@@ -74,9 +74,14 @@ function BlinkyMark({ size = 28 }) {
   );
 }
 
-export default function FinancialChat({ analysis, lang = "en" }) {
+export default function FinancialChat({ analysis, lang = "en", roadmapId }) {
   const t = STRINGS[lang] || STRINGS.en;
   const { data: session } = useSession();
+
+  // Extract language-specific analysis for chat context (handles bilingual { en, es } format)
+  const chatAnalysis = analysis?.en
+    ? (lang === "es" ? analysis.es : analysis.en)
+    : analysis;
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -86,6 +91,10 @@ export default function FinancialChat({ analysis, lang = "en" }) {
   const [loading, setLoading] = useState(false);
   const [gate, setGate] = useState(null);
   const [anonCount, setAnonCount] = useState(0);
+  const [gateEmail, setGateEmail] = useState("");
+  const [gatePassword, setGatePassword] = useState("");
+  const [gateLoading, setGateLoading] = useState(false);
+  const [gateError, setGateError] = useState(null);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -127,7 +136,7 @@ export default function FinancialChat({ analysis, lang = "en" }) {
           "Content-Type": "application/json",
           "x-anon-chat-count": String(anonCount),
         },
-        body: JSON.stringify({ messages: newHistory, analysis, lang }),
+        body: JSON.stringify({ messages: newHistory, analysis: chatAnalysis, lang }),
       });
 
       const data = await res.json();
@@ -163,6 +172,31 @@ export default function FinancialChat({ analysis, lang = "en" }) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    }
+  }
+
+  async function handleGateSignup(e) {
+    e.preventDefault();
+    if (!gateEmail || !gatePassword) return;
+    setGateLoading(true);
+    setGateError(null);
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: gateEmail, password: gatePassword, roadmapId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGateError(data.error || t.errorGeneric);
+        setGateLoading(false);
+        return;
+      }
+      await signIn("credentials", { email: gateEmail, password: gatePassword, redirect: false });
+      setGate(null);
+    } catch {
+      setGateError(t.errorGeneric);
+      setGateLoading(false);
     }
   }
 
@@ -333,6 +367,22 @@ export default function FinancialChat({ analysis, lang = "en" }) {
       text-align: center; background: #fff;
       line-height: 1.45; flex-shrink: 0;
     }
+
+    .bw-gate-input {
+      width: 100%; padding: 10px 13px;
+      border: 1.5px solid #dde2ec; border-radius: 10px;
+      font-size: 14px; outline: none; color: #4A4A4A;
+      font-family: 'Nunito Sans', -apple-system, sans-serif;
+      font-weight: 600; transition: border-color 0.15s;
+      box-sizing: border-box;
+    }
+    .bw-gate-input:focus { border-color: #2B5BAE; }
+    .bw-gate-input::placeholder { font-weight: 400; color: #aab0be; }
+    .bw-gate-error {
+      background: #fff3f3; border: 1px solid #ffd0d0;
+      color: #de350b; padding: 8px 12px; border-radius: 8px;
+      font-size: 12px; width: 100%; text-align: left;
+    }
   `;
 
   return (
@@ -401,21 +451,46 @@ export default function FinancialChat({ analysis, lang = "en" }) {
             {/* Gate: Signup */}
             {gate === "signup" && (
               <div className="bw-gate">
-                <img
-                  src="/OneBlinc.png"
-                  alt="OneBlinc"
-                  style={{ height: 32, marginBottom: 4 }}
-                  onError={(e) => { e.target.style.display = "none"; }}
-                />
                 <div style={{ fontSize: 34 }}>🎯</div>
                 <h2>{t.signupTitle}</h2>
                 <p>{t.signupBody}</p>
-                <button className="bw-gate-btn bw-gate-blue" onClick={() => signIn()}>
-                  {t.signupCta}
-                </button>
+                <form onSubmit={handleGateSignup} style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {gateError && <div className="bw-gate-error">{gateError}</div>}
+                  <input
+                    className="bw-gate-input"
+                    type="email"
+                    value={gateEmail}
+                    onChange={(e) => setGateEmail(e.target.value)}
+                    placeholder={lang === "es" ? "Correo electrónico" : "Email"}
+                    required
+                    autoFocus
+                  />
+                  <input
+                    className="bw-gate-input"
+                    type="password"
+                    value={gatePassword}
+                    onChange={(e) => setGatePassword(e.target.value)}
+                    placeholder={lang === "es" ? "Contraseña (mín. 8 caracteres)" : "Password (8+ chars)"}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="bw-gate-btn bw-gate-blue"
+                    disabled={gateLoading}
+                    style={{ opacity: gateLoading ? 0.7 : 1 }}
+                  >
+                    {gateLoading ? (lang === "es" ? "Guardando…" : "Saving…") : t.signupCta}
+                  </button>
+                </form>
                 <div className="bw-gate-sub">
                   {t.signupSub}{" "}
-                  <button className="bw-gate-link" onClick={() => signIn()}>
+                  <button
+                    className="bw-gate-link"
+                    onClick={() => {
+                      const cb = encodeURIComponent(window.location.pathname);
+                      window.location.href = `/auth/signin?callbackUrl=${cb}&lang=${lang}`;
+                    }}
+                  >
                     {t.signupLogin}
                   </button>
                 </div>

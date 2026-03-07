@@ -680,7 +680,7 @@ export default function RoadmapPage({ analysis, roadmapId }) {
       </div>
 
       {/* Blinky chat — pre-loaded with this user's analysis */}
-      <FinancialChat analysis={analysis} lang={lang === 'EN' ? 'en' : 'es'} />
+      <FinancialChat analysis={analysis} lang={lang === 'EN' ? 'en' : 'es'} roadmapId={roadmapId} />
     </>
   )
 }
