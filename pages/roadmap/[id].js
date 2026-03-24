@@ -473,27 +473,23 @@ function SpendingSnapshot({ snapshot, c }) {
 }
 
 // ── getServerSideProps ─────────────────────────────────────────
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, query }) {
   const { db } = await import('../../lib/db')
   const result = await db.query('SELECT analysis FROM roadmaps WHERE id = $1', [params.id])
   if (!result.rows[0]) return { notFound: true }
-  return { props: { analysis: result.rows[0].analysis, roadmapId: params.id } }
+  return { props: { analysis: result.rows[0].analysis, roadmapId: params.id, initialLang: query.lang === 'ES' ? 'ES' : 'EN' } }
 }
 
 // ── Main page ──────────────────────────────────────────────────
-export default function RoadmapPage({ analysis, roadmapId }) {
+export default function RoadmapPage({ analysis, roadmapId, initialLang }) {
   const router = useRouter()
   const { data: session } = useSession()
-  const [lang, setLang] = useState('EN')
+  const [lang, setLang] = useState(initialLang || 'EN')
   const [saveStep, setSaveStep] = useState('prompt')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
-
-  useState(() => {
-    try { const s = sessionStorage.getItem('lang'); if (s === 'ES') setLang('ES') } catch (_) {}
-  })
 
   const c = C[lang]
   const activeAnalysis = analysis.en ? (lang === 'ES' ? analysis.es : analysis.en) : analysis

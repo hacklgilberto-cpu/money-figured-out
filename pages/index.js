@@ -249,8 +249,7 @@ export default function Home() {
       const res = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ public_token: token, userInputs: { ...userInputs, lang } }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Analysis failed')
-      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('lang', lang)
-      router.push(`/roadmap/${data.roadmapId}`)
+      router.push(`/roadmap/${data.roadmapId}?lang=${lang}`)
     } catch (err) { setError(err.message); setStep('questions') }
   }
 
@@ -261,8 +260,7 @@ export default function Home() {
       const res = await fetch('/api/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: userInputs.state || 'FL', payFrequency: userInputs.payFrequency || 'biweekly', daysToPayday: userInputs.daysToPayday || '7', lang }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Demo failed')
-      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('lang', lang)
-      router.push(`/roadmap/${data.roadmapId}`)
+      router.push(`/roadmap/${data.roadmapId}?lang=${lang}`)
     } catch (err) { setError(err.message); setStep('questions'); setDemoLoading(false) }
   }
 
