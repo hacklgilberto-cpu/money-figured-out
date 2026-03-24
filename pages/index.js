@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { usePlaidLink } from 'react-plaid-link'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -218,7 +218,7 @@ export default function Home() {
 
   const c = COPY[lang]
 
-  useState(() => { fetchLinkToken() })
+  useEffect(() => { fetchLinkToken() }, []) // eslint-disable-line
 
   async function fetchLinkToken() {
     try {
@@ -228,7 +228,11 @@ export default function Home() {
     } catch { setError('Failed to initialize bank connection') }
   }
 
-  const onPlaidSuccess = useCallback((public_token) => { handleBuildRoadmap(public_token) }, []) // eslint-disable-line
+  // Ref keeps onPlaidSuccess stable (required by usePlaidLink) while always
+  // calling the latest handleBuildRoadmap, which closes over current userInputs.
+  const handleBuildRoadmapRef = useRef()
+  handleBuildRoadmapRef.current = handleBuildRoadmap
+  const onPlaidSuccess = useCallback((public_token) => { handleBuildRoadmapRef.current(public_token) }, [])
 
   const { open: openPlaid, ready: plaidReady } = usePlaidLink({
     token: linkToken,

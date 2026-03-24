@@ -126,7 +126,7 @@ export default async function handler(req, res) {
               roadmapId, itemId, t.transaction_id, t.account_id,
               acct.name || null, acct.type || null, acct.subtype || null,
               t.date, t.name, t.merchant_name || null, t.amount,
-              t.iso_currency_code || 'CAD',
+              t.iso_currency_code || 'USD',
               t.personal_finance_category?.primary || null,
               t.personal_finance_category?.detailed || null,
               t.payment_channel || null, t.pending || false
