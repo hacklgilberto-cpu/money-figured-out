@@ -106,7 +106,7 @@ export default function CreditHealth({ snapshot, error }) {
     try {
       const res = await fetch('/api/dev/trigger-credit-pull')
       if (res.ok) {
-        setRefreshMsg('Score refreshed. Reload the page to see the latest data.')
+        window.location.reload()
       } else {
         const data = await res.json()
         setRefreshMsg(`Refresh failed: ${data.error || 'unknown error'}`)
