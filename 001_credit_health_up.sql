@@ -3,7 +3,7 @@
 -- Version:   001
 -- Created:   2025-07-09
 -- Author:    Blinc Engineering
--- Run order: after customers table exists
+-- Run order: after users table exists
 -- =============================================================
 
 BEGIN;
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS credit_snapshots (
 
   -- ── Identity ─────────────────────────────────────────────────
   id                              UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id                     UUID          NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  customer_id                     UUID          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   pull_date                       DATE          NOT NULL,
   pull_timestamp                  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
 
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS credit_score_changes (
 
   -- ── Identity ─────────────────────────────────────────────────
   id                              UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id                     UUID          NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  customer_id                     UUID          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   snapshot_id_from                UUID          REFERENCES credit_snapshots(id) ON DELETE SET NULL,  -- NULL for first pull
   snapshot_id_to                  UUID          NOT NULL REFERENCES credit_snapshots(id) ON DELETE CASCADE,
   change_date                     DATE          NOT NULL DEFAULT CURRENT_DATE,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS customer_credit_alerts (
 
   -- ── Identity ─────────────────────────────────────────────────
   id                              UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id                     UUID          NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  customer_id                     UUID          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   change_id                       UUID          NOT NULL REFERENCES credit_score_changes(id) ON DELETE CASCADE,
 
   -- ── Alert classification ──────────────────────────────────────
@@ -356,7 +356,7 @@ ORDER BY customer_id, pull_date DESC;
 
 COMMENT ON VIEW v_customer_latest_snapshot IS 'Most recent snapshot per customer. Use for dashboard queries without a self-join.';
 
--- MLA compliance export: active duty customers with product details
+-- MLA compliance export: active duty users with product details
 CREATE OR REPLACE VIEW v_mla_active_duty_log AS
 SELECT
   m.customer_id,
@@ -381,7 +381,7 @@ COMMENT ON VIEW v_mla_active_duty_log IS 'Active duty pull records for MLA compl
 -- ALTER TABLE credit_score_changes      ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE customer_credit_alerts    ENABLE ROW LEVEL SECURITY;
 
--- Customers can only see their own rows
+-- users can only see their own rows
 -- CREATE POLICY customer_own_snapshots ON credit_snapshots
 --   USING (customer_id = auth.uid());
 
