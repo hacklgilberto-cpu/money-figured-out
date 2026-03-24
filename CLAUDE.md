@@ -24,25 +24,17 @@ Live at ai-pfm.vercel.app. Repo: hacklgilberto-cpu/money-figured-out.
 - Quote `pages/roadmap/[id].js` in all bash commands to avoid glob expansion
 - Prefer complete file replacements over partial diffs when editing
 
-## Current phase: Phase 0 (in progress)
-**Hard gate — nothing else starts until this passes.**
-- [ ] Fix /api/analyze intermittent 400 — root cause is Plaid onSuccess handler not reliably passing public_token to the API
-- [ ] Delete lib/canadian-context.js and clean dead references
-- [ ] Switch Plaid from CountryCode.Ca to CountryCode.Us
-- [ ] Full smoke test: auth → Plaid link → /api/analyze → roadmap (Marcus Rivera persona)
+## Current phase: Phase 2 (next up)
+
+## Completed phases
+- Phase 0 ✅ — /api/analyze 400 fixed, canadian-context.js deleted, CountryCode.Us set. Pending: full smoke test (auth → Plaid link → /api/analyze → roadmap with Marcus Rivera)
+- Phase 1 ✅ — clarityService.js + creditPullJob.js ported to lib/, 001_credit_health_up.sql run, credit UI live at /credit-health. Pending: archive hacklgilberto-cpu/credit-health repo on GitHub
 
 ## Roadmap (sequential — each gate must pass before next phase)
-- Phase 1: Absorb credit-health repo — port clarityService.js, creditHealth.js, creditPullJob.js → lib/; run 001_credit_health_up.sql; rebuild credit UI in Next.js; archive credit-health repo
 - Phase 2: Pave foundation — lib/paveService.js wrapper, DB tables (recurring_sets, income_predictions, fee_events, balance_snapshots), nightly Vercel cron sync
 - Phase 3: 14-day cashflow map — core dashboard, deposit widget, upcoming bills list, alert engine v1, fee history panel
 - Phase 4: AI assistant upgrade — cashflow context injection, RED/ORANGE/YELLOW/GREEN/BLUE mode detection, survival playbooks
 - Phase 5: Credit path — VantageScore in dashboard, score history chart, price-increase alerts
-
-## Repo being absorbed
-credit-health (hacklgilberto-cpu/credit-health) is being merged into this repo.
-Assets to port: clarityService.js, creditHealth.js, creditPullJob.js, 001_credit_health_up.sql.
-Dart files are NOT ported — credit UI is rebuilt from scratch in Next.js/React.
-Archive credit-health repo on GitHub once confirmed live here.
 
 ## Test persona
 Marcus Rivera — use for all sandbox testing across Plaid, Pave, and AI flows.

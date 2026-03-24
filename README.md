@@ -21,15 +21,20 @@ The customer we're designing for came in because they needed a $50 advance. They
 - Connects to your bank via Plaid
 - Runs your transactions through Claude (Anthropic) and generates a ranked savings roadmap with exact dollar impact per action
 - Surfaces a financial health score and situational action cards
-- Tracks your VantageScore 3.0 credit score over time
+- Tracks your VantageScore 3.0 credit score over time (`/credit-health`)
 - English and Spanish bilingual support
 
 ---
 
-## What's being built next
+## Phases
 
-### Phase 1 — Merge credit-health
-Absorbing the credit monitoring backend (`clarityService.js`, `creditHealth.js`, `creditPullJob.js`, and the DB migration) into this repo. The credit-health repo will be archived once everything is confirmed live here. The Flutter UI is being rebuilt natively in Next.js.
+### ✅ Phase 0 — Foundation stable
+Plaid pipeline solid, Canadian context removed, `CountryCode.Us` set, `/api/analyze` 400 fixed.
+
+### ✅ Phase 1 — Credit health merged
+`clarityService.js`, `creditPullJob.js` ported to `lib/`. DB migration (`001_credit_health_up.sql`) run. Credit UI live at `/credit-health`. `credit-health` repo archived.
+
+## What's being built next
 
 ### Phase 2 — Pave integration
 We currently use Pave only for credit risk scoring at onboarding. The expansion unlocks:
