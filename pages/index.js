@@ -258,7 +258,7 @@ export default function Home() {
       const res = await fetch('/api/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: userInputs.state || 'FL', payFrequency: userInputs.payFrequency || 'biweekly', daysToPayday: userInputs.daysToPayday || '7', lang }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Demo failed')
-      router.push(`/roadmap/${data.roadmapId}?lang=${lang}`)
+      router.push(`/demo-dashboard`)
     } catch (err) { setError(err.message); setStep('questions'); setDemoLoading(false) }
   }
 
