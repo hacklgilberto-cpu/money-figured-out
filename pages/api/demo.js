@@ -1,6 +1,7 @@
 import { buildMarcusProfile } from '../../lib/demo-persona'
 import { generateFinancialAnalysis } from '../../lib/claude-analysis'
 import { db } from '../../lib/db'
+import { seedMarcusForecast } from '../../lib/playbooks'
 
 export const maxDuration = 60
 
@@ -86,6 +87,15 @@ export default async function handler(req, res) {
           ]
         )
       } catch (_) {}
+    }
+
+    // ── Seed Marcus's cashflow forecast + playbook matching ────
+    // This populates user_forecasts so the chat knows his mode
+    // Uses NULL user_id for demo (same as roadmap)
+    try {
+      await seedMarcusForecast(null)
+    } catch (err) {
+      console.warn('[demo] forecast seed failed (non-fatal):', err.message)
     }
 
     res.json({ roadmapId, analysis })
