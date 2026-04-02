@@ -263,29 +263,10 @@ export default async function handler(req, res) {
   const session = await getServerSession(req, res, authOptions);
   const isAuthenticated = !!session?.user;
 
-  const anonCount = parseInt(req.headers["x-anon-chat-count"] || "0", 10);
-  if (!isAuthenticated && anonCount >= 1) {
-    return res.status(402).json({
-      error: "signup_required",
-      message: lang === "es"
-        ? "Crea una cuenta gratis para continuar con tu coach financiero."
-        : "Create a free account to keep chatting with your financial coach.",
-    });
-  }
-
-  if (isAuthenticated) {
-    const userId = session.user.id;
-    const count = await getChatCount(userId);
-    const FREE_AUTH_LIMIT = 3;
-    if (count >= FREE_AUTH_LIMIT) {
-      return res.status(402).json({
-        error: "paywall",
-        message: lang === "es"
-          ? "Has usado tus 3 consultas gratuitas. Actualiza para consultas ilimitadas."
-          : "You've used your 3 free questions. Upgrade for unlimited coaching.",
-      });
-    }
-  }
+  // TODO: restore anon + auth gating after demo
+  // const anonCount = parseInt(req.headers["x-anon-chat-count"] || "0", 10);
+  // if (!isAuthenticated && anonCount >= 1) { ... }
+  // if (isAuthenticated) { const count = await getChatCount(...); if (count >= 3) { ... } }
 
   // --- Load cashflow context ---
   const userId = isAuthenticated ? session.user.id : null;
