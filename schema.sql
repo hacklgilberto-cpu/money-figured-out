@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS users (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email       TEXT UNIQUE NOT NULL,
   password    TEXT NOT NULL,
-  province    TEXT DEFAULT 'ON',
   birth_year  INT,
   created_at  TIMESTAMPTZ DEFAULT now()
 );
@@ -49,22 +48,10 @@ CREATE TABLE IF NOT EXISTS tasks (
   created_at        TIMESTAMPTZ DEFAULT now()
 );
 
--- Net worth history (for trend chart on dashboard)
-CREATE TABLE IF NOT EXISTS net_worth_snapshots (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       UUID REFERENCES users(id) ON DELETE CASCADE,
-  net_worth     NUMERIC NOT NULL,
-  assets        NUMERIC NOT NULL,
-  liabilities   NUMERIC NOT NULL,
-  snapshot_date DATE DEFAULT CURRENT_DATE,
-  created_at    TIMESTAMPTZ DEFAULT now()
-);
-
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_plaid_items_user_id ON plaid_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_roadmaps_user_id ON roadmaps(user_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX IF NOT EXISTS idx_snapshots_user_id ON net_worth_snapshots(user_id);
 
 -- Done!
 SELECT 'Schema created successfully' as status;

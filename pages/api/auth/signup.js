@@ -37,25 +37,6 @@ export default async function handler(req, res) {
       'UPDATE tasks SET user_id = $1 WHERE roadmap_id = $2 AND user_id IS NULL',
       [userId, roadmapId]
     )
-    // Save first net worth snapshot
-    const roadmap = await db.query(
-      'SELECT analysis FROM roadmaps WHERE id = $1',
-      [roadmapId]
-    )
-    if (roadmap.rows[0]) {
-      const analysis = roadmap.rows[0].analysis
-      if (analysis?.netWorthStatement) {
-        await db.query(
-          'INSERT INTO net_worth_snapshots (user_id, net_worth, assets, liabilities) VALUES ($1, $2, $3, $4)',
-          [
-            userId,
-            analysis.netWorthStatement.netWorth,
-            analysis.netWorthStatement.totalAssets,
-            analysis.netWorthStatement.totalLiabilities
-          ]
-        )
-      }
-    }
   }
 
   res.status(201).json({ success: true, userId })
